@@ -1,0 +1,16 @@
+import { useEffect, useState } from 'react';
+import PageHeader from '../components/PageHeader.jsx';
+import { api, endpoints } from '../services/api.js';
+
+const emptyForm = { nombreCompleto: '', correo: '', telefono: '', asunto: 'Consulta sobre pedido personalizado', mensaje: '' };
+
+export default function Contacto({ role }) {
+  const [form, setForm] = useState(emptyForm);
+  const [contactos, setContactos] = useState([]);
+  const [message, setMessage] = useState('');
+  const [error, setError] = useState('');
+  const load = async () => setContactos(await api.get(endpoints.contactos));
+  useEffect(() => { if (role === 'admin') load().catch(err=>setError(err.message)); }, [role]);
+  const submit = async (e) => { e.preventDefault(); setError(''); setMessage(''); try { await api.post(endpoints.contactos, form); setMessage('Mensaje enviado correctamente.'); setForm(emptyForm); if(role==='admin') await load(); } catch(err){ setError(err.message); } };
+  return <div className="fade-in"><PageHeader icon="bi-chat-dots-fill" title={role==='admin'?'Mensajes de contacto':'Contacto'} subtitle={role==='admin'?'Consulta los mensajes recibidos desde el formulario.':'Envíanos tu consulta sobre polos personalizados.'} />{error&&<div className="alert alert-danger">{error}</div>}{message&&<div className="alert alert-success">{message}</div>}<div className="row g-4"><div className="col-lg-5"><form className="panel-card form-card" onSubmit={submit}><h4>Enviar mensaje</h4><label>Nombre completo</label><input className="form-control" value={form.nombreCompleto} onChange={e=>setForm({...form,nombreCompleto:e.target.value})} required /><label>Correo</label><input className="form-control" type="email" value={form.correo} onChange={e=>setForm({...form,correo:e.target.value})} required /><label>Teléfono</label><input className="form-control" value={form.telefono} onChange={e=>setForm({...form,telefono:e.target.value})} /><label>Asunto</label><input className="form-control" value={form.asunto} onChange={e=>setForm({...form,asunto:e.target.value})} required /><label>Mensaje</label><textarea className="form-control" rows="5" value={form.mensaje} onChange={e=>setForm({...form,mensaje:e.target.value})} required></textarea><button className="btn btn-primary mt-3 w-100" type="submit">Enviar mensaje</button></form></div><div className="col-lg-7"><div className="panel-card accent-panel"><h4>MUBI Textil Store</h4><p><i className="bi bi-geo-alt"></i> Capac Yupanqui N°331, cerca a la plaza 2 de mayo.</p><p><i className="bi bi-whatsapp"></i> Atención para pedidos personalizados y sublimados.</p><p><i className="bi bi-clock-history"></i> Consulta el estado de tus pedidos desde la plataforma.</p></div>{role==='admin'&&<div className="panel-card mt-4"><div className="section-actions"><h4>Mensajes recibidos</h4><button className="btn btn-outline-dark" onClick={load}>Actualizar</button></div><div className="table-responsive"><table className="table align-middle"><thead><tr><th>Nombre</th><th>Asunto</th><th>Correo</th><th>Estado</th></tr></thead><tbody>{contactos.map(c=><tr key={c.idContacto}><td>{c.nombreCompleto}</td><td>{c.asunto}</td><td>{c.correo}</td><td><span className="status-pill">{c.estado}</span></td></tr>)}</tbody></table></div></div>}</div></div></div>;
+}

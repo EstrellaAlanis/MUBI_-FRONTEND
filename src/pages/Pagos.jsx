@@ -1,0 +1,20 @@
+import { useEffect, useMemo, useState } from 'react';
+import PageHeader from '../components/PageHeader.jsx';
+import { api, endpoints } from '../services/api.js';
+
+const emptyForm = { idPedido: '', monto: '', metodoPago: 'Yape', tipoPago: 'adelanto', comprobante: '' };
+
+export default function Pagos() {
+  const [pagos, setPagos] = useState([]);
+  const [pedidos, setPedidos] = useState([]);
+  const [form, setForm] = useState(emptyForm);
+  const [message, setMessage] = useState('');
+  const [error, setError] = useState('');
+  const load = async () => { const [pagosData, pedidosData] = await Promise.all([api.get(endpoints.pagos), api.get(endpoints.pedidos)]); setPagos(pagosData); setPedidos(pedidosData); setForm(prev=>({...prev,idPedido:prev.idPedido||pedidosData[0]?.idPedido||''})); };
+  useEffect(()=>{load().catch(err=>setError(err.message));},[]);
+  const total = useMemo(()=>pagos.reduce((acc,p)=>acc+Number(p.monto||0),0),[pagos]);
+  const submit = async (e) => { e.preventDefault(); setError(''); setMessage(''); try { await api.post(endpoints.pagos,{...form,idPedido:Number(form.idPedido),monto:Number(form.monto)}); setMessage('Pago registrado y saldo actualizado.'); setForm({...emptyForm,idPedido:pedidos[0]?.idPedido||''}); await load(); } catch(err){setError(err.message);} };
+  const remove = async (id) => { if(!confirm('¿Eliminar pago?')) return; try { await api.delete(`${endpoints.pagos}/${id}`); setMessage('Pago eliminado.'); await load(); } catch(err){setError(err.message);} };
+  const pedidoName = (id) => pedidos.find(p=>Number(p.idPedido)===Number(id))?.cliente || `Pedido #${id}`;
+  return <div className="fade-in"><PageHeader icon="bi-cash-coin" title="Gestión de pagos" subtitle="Control de adelantos, pagos finales, métodos de pago y saldo pendiente." />{error&&<div className="alert alert-danger">{error}</div>}{message&&<div className="alert alert-success">{message}</div>}<div className="stats-grid compact"><article className="report-card"><span>Total pagado</span><strong>S/ {total.toFixed(2)}</strong><p>Registrado en backend.</p></article><article className="report-card"><span>Pagos</span><strong>{pagos.length}</strong><p>Historial actual.</p></article></div><div className="row g-4"><div className="col-lg-4"><form className="panel-card form-card" onSubmit={submit}><h4>Registrar pago</h4><label>Pedido</label><select className="form-select" value={form.idPedido} onChange={e=>setForm({...form,idPedido:e.target.value})}>{pedidos.map(p=><option key={p.idPedido} value={p.idPedido}>#{p.idPedido} - {p.cliente}</option>)}</select><label>Monto</label><input className="form-control" type="number" step="0.01" value={form.monto} onChange={e=>setForm({...form,monto:e.target.value})} required /><label>Método</label><select className="form-select" value={form.metodoPago} onChange={e=>setForm({...form,metodoPago:e.target.value})}><option>Yape</option><option>Plin</option><option value="transferencia">transferencia</option><option value="efectivo">efectivo</option></select><label>Tipo</label><select className="form-select" value={form.tipoPago} onChange={e=>setForm({...form,tipoPago:e.target.value})}><option value="adelanto">adelanto</option><option value="pago_parcial">pago parcial</option><option value="pago_final">pago final</option></select><button className="btn btn-primary w-100 mt-3" type="submit">Guardar pago</button></form></div><div className="col-lg-8"><div className="panel-card"><div className="section-actions"><h4>Historial de pagos</h4><button className="btn btn-outline-dark" onClick={load}>Actualizar</button></div><div className="table-responsive"><table className="table align-middle"><thead><tr><th>Pedido</th><th>Monto</th><th>Método</th><th>Tipo</th><th>Fecha</th><th></th></tr></thead><tbody>{pagos.map(p=><tr key={p.idPago}><td>{pedidoName(p.idPedido)}</td><td>S/ {Number(p.monto||0).toFixed(2)}</td><td>{p.metodoPago}</td><td>{p.tipoPago}</td><td>{new Date(p.fechaPago).toLocaleDateString()}</td><td><button className="btn btn-sm btn-outline-danger" onClick={()=>remove(p.idPago)}>Eliminar</button></td></tr>)}</tbody></table></div></div></div></div></div>;
+}
