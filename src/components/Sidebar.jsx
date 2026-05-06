@@ -12,37 +12,70 @@ const adminLinks = [
   ['/reportes', 'bi-bar-chart-fill', 'Reportes']
 ];
 
+const publicLinks = [
+  ['/', 'bi-house-heart-fill', 'Inicio'],
+  ['/productos', 'bi-bag-heart-fill', 'Catálogo'],
+  ['/contacto', 'bi-chat-dots-fill', 'Contacto'],
+  ['/login', 'bi-shield-lock-fill', 'Iniciar sesión']
+];
+
 const clientLinks = [
   ['/', 'bi-house-heart-fill', 'Inicio'],
   ['/productos', 'bi-bag-heart-fill', 'Catálogo'],
   ['/pedidos', 'bi-clipboard-plus-fill', 'Mis pedidos'],
   ['/pagos', 'bi-wallet2', 'Mis pagos'],
-  ['/contacto', 'bi-chat-dots-fill', 'Contacto'],
-  ['/login', 'bi-shield-lock-fill', 'Login']
+  ['/contacto', 'bi-chat-dots-fill', 'Contacto']
 ];
 
 export default function Sidebar({ role = 'cliente', user }) {
-  const links = role === 'admin' ? adminLinks : clientLinks;
+  const links = role === 'admin' ? adminLinks : user ? clientLinks : publicLinks;
+
   return (
     <aside className="sidebar">
       <div className="brand">
         <div className="brand-logo">M</div>
         <div>
           <h1>MUBI</h1>
-          <span>{role === 'admin' ? 'Panel administrativo' : 'Tienda online'}</span>
+          <span>
+            {role === 'admin'
+              ? 'Panel administrativo'
+              : user
+                ? 'Área del cliente'
+                : 'Tienda online'}
+          </span>
         </div>
       </div>
+
       <nav className="nav-list">
         {links.map(([to, icon, label]) => (
-          <NavLink key={to} to={to} className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
+          <NavLink
+            key={to}
+            to={to}
+            className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
+          >
             <i className={`bi ${icon}`}></i>
             <span>{label}</span>
           </NavLink>
         ))}
       </nav>
+
       <div className="sidebar-card">
-        <strong>{role === 'admin' ? 'Modo dueño' : 'Modo cliente'}</strong>
-        <p>{role === 'admin' ? 'Privilegios completos: usuarios, productos, pedidos, pagos, inventario y reportes.' : 'Catálogo, pedidos, pagos y contacto sin acceso a administración.'}</p>
+        <strong>
+          {role === 'admin'
+            ? 'Modo dueño'
+            : user
+              ? 'Modo cliente'
+              : 'Modo visitante'}
+        </strong>
+
+        <p>
+          {role === 'admin'
+            ? 'Privilegios completos: usuarios, productos, pedidos, pagos, inventario y reportes.'
+            : user
+              ? 'Consulta tu catálogo, pedidos, pagos y contacto sin acceso a administración.'
+              : 'Explora productos, diseños y categorías. Inicia sesión recién al realizar o pagar un pedido.'}
+        </p>
+
         {user && <small>Sesión: {user.correo}</small>}
       </div>
     </aside>

@@ -181,3 +181,543 @@ body { background: radial-gradient(circle at 75% 0%, rgba(140,255,0,.16), transp
   .input-action { grid-template-columns: 1fr; }
   .session-chip { width: 100%; justify-content: center; }
 }
+/* ===== MUBI UX/UI - mejoras de tienda pública ===== */
+
+:root {
+  --bg: #f6f8f1;
+  --surface: #ffffff;
+  --surface-2: #f1f7e9;
+  --dark: #07100b;
+  --dark-2: #101813;
+  --ink: #101914;
+  --muted: #68746b;
+  --primary: #7cff00;
+  --primary-2: #5fd000;
+  --primary-dark: #3e8200;
+  --accent: #f2c94c;
+  --accent-soft: #fff6d8;
+  --lime-soft: rgba(124, 255, 0, .14);
+  --border: #dfe8d7;
+  --shadow: 0 24px 60px rgba(6, 13, 8, 0.12);
+  --shadow-soft: 0 14px 32px rgba(6, 13, 8, 0.08);
+}
+
+body {
+  background:
+    radial-gradient(circle at 80% 0%, rgba(124,255,0,.16), transparent 34%),
+    radial-gradient(circle at 8% 18%, rgba(242,201,76,.14), transparent 26%),
+    var(--bg);
+  color: var(--ink);
+}
+
+.sidebar {
+  background: linear-gradient(180deg, #060b08 0%, #101813 62%, #050705 100%);
+  border-right: 1px solid rgba(124,255,0,.45);
+  box-shadow: 14px 0 36px rgba(0,0,0,.16);
+}
+
+.brand-logo {
+  background: linear-gradient(135deg, var(--primary), #b6ff42);
+  color: #071008;
+  box-shadow: 0 16px 35px rgba(124,255,0,.28);
+}
+
+.nav-item {
+  border: 1px solid transparent;
+}
+
+.nav-item:hover {
+  transform: translateX(4px);
+  background: rgba(124,255,0,.10);
+}
+
+.nav-item.active {
+  background: linear-gradient(135deg, rgba(124,255,0,.18), rgba(242,201,76,.10));
+  border-color: rgba(124,255,0,.42);
+}
+
+.topbar {
+  background: rgba(246, 248, 241, .90);
+}
+
+.panel-card,
+.auth-card,
+.product-card,
+.stat-card,
+.report-card,
+.catalog-banner,
+.quick-order-card,
+.category-card {
+  border: 1px solid rgba(62,130,0,.14);
+  box-shadow: var(--shadow-soft);
+}
+
+.btn {
+  transition: .2s ease;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #07100b, #1a261d);
+  border: 1px solid #07100b;
+  color: white;
+  box-shadow: 0 10px 26px rgba(10,15,11,.20);
+}
+
+.btn-primary:hover {
+  background: linear-gradient(135deg, #5fd000, #7cff00);
+  color: #071008;
+  border-color: var(--primary);
+  transform: translateY(-1px);
+}
+
+.btn-outline-dark {
+  border-color: rgba(8,13,10,.45);
+  background: white;
+}
+
+.btn-outline-dark:hover {
+  background: #101713;
+  color: white;
+}
+
+.badge-soft,
+.status-pill {
+  background: rgba(124,255,0,.16);
+  color: var(--primary-dark);
+}
+
+.category-pill {
+  display: inline-flex;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 900;
+  background: var(--accent-soft);
+  color: #795900;
+}
+
+.product-tags {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+/* Banner superior del catálogo */
+.catalog-banner {
+  background:
+    radial-gradient(circle at top right, rgba(124,255,0,.22), transparent 34%),
+    linear-gradient(135deg, #ffffff, #f6fbef);
+  border-radius: 30px;
+  padding: 28px;
+  margin-bottom: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.catalog-banner h2 {
+  margin: 12px 0 8px;
+  font-weight: 950;
+  letter-spacing: -.02em;
+}
+
+.catalog-banner p {
+  margin: 0;
+  color: var(--muted);
+  max-width: 760px;
+}
+
+/* Landing pública */
+.public-store-hero {
+  background:
+    radial-gradient(circle at 85% 18%, rgba(124,255,0,.22), transparent 28%),
+    linear-gradient(135deg, #07100b, #101813 55%, #1b310f);
+}
+
+.store-section {
+  background: rgba(255,255,255,.62);
+  border: 1px solid rgba(62,130,0,.10);
+  border-radius: 32px;
+  padding: 26px;
+}
+
+.section-heading {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 20px;
+}
+
+.section-heading h2 {
+  margin: 4px 0 0;
+  font-weight: 950;
+  letter-spacing: -.02em;
+}
+
+.small-link {
+  font-weight: 900;
+  color: var(--primary-dark);
+}
+
+.category-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.category-card {
+  background: #fff;
+  border-radius: 26px;
+  padding: 22px;
+  transition: .2s ease;
+}
+
+.category-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow);
+}
+
+.category-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 20px;
+  display: grid;
+  place-items: center;
+  background: var(--lime-soft);
+  color: var(--primary-dark);
+  font-size: 24px;
+}
+
+.category-card h3 {
+  margin: 16px 0 8px;
+  font-weight: 950;
+}
+
+.category-card p {
+  margin: 0;
+  color: var(--muted);
+}
+
+.cat-1 {
+  background: var(--accent-soft);
+  color: #795900;
+}
+
+.cat-2 {
+  background: #e7f0ff;
+  color: #23527c;
+}
+
+.cat-3 {
+  background: #efffe0;
+  color: var(--primary-dark);
+}
+
+.quick-order-card {
+  background:
+    radial-gradient(circle at top right, rgba(242,201,76,.20), transparent 30%),
+    linear-gradient(135deg, #ffffff, #f8fbf2);
+  border-radius: 32px;
+  padding: 28px;
+  display: grid;
+  grid-template-columns: .9fr 1.1fr;
+  gap: 24px;
+  align-items: center;
+}
+
+.quick-order-card h2 {
+  margin: 12px 0 8px;
+  font-weight: 950;
+}
+
+.quick-order-card p {
+  color: var(--muted);
+}
+
+.quick-order-form {
+  display: grid;
+  gap: 12px;
+}
+
+.quick-order-form textarea {
+  width: 100%;
+  min-height: 130px;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 16px;
+  resize: vertical;
+}
+
+.quick-order-form textarea:focus {
+  outline: none;
+  border-color: var(--primary-dark);
+  box-shadow: 0 0 0 .22rem rgba(124,255,0,.18);
+}
+
+.quick-order-form small {
+  color: var(--muted);
+}
+
+/* Productos tipo tienda */
+.product-card {
+  border-radius: 30px;
+}
+
+.product-card-premium:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--shadow);
+}
+
+.product-art {
+  background:
+    radial-gradient(circle at top right, rgba(124,255,0,.44), transparent 35%),
+    linear-gradient(135deg, #101713, #263027);
+}
+
+.product-art i {
+  color: var(--primary);
+}
+
+.product-art.art-1 {
+  background:
+    radial-gradient(circle at top right, rgba(242,201,76,.38), transparent 34%),
+    linear-gradient(135deg, #0b100d, #222b22);
+  color: var(--accent);
+}
+
+.product-art.art-2 {
+  background:
+    radial-gradient(circle at top right, rgba(124,255,0,.25), transparent 36%),
+    linear-gradient(135deg, #efffe0, #ffffff);
+}
+
+.product-art.art-2 i {
+  color: var(--primary-dark);
+}
+
+.product-art.art-3 {
+  background:
+    radial-gradient(circle at top right, rgba(255,255,255,.20), transparent 36%),
+    linear-gradient(135deg, #07100b, #1b310f);
+}
+
+.product-body h3 {
+  letter-spacing: -.01em;
+}
+
+.product-body p {
+  min-height: 52px;
+}
+
+.empty-state {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 34px;
+}
+
+.empty-state i {
+  font-size: 34px;
+  color: var(--primary-dark);
+}
+
+.empty-state h4 {
+  font-weight: 950;
+  margin: 12px 0 6px;
+}
+
+/* Responsive para nuevas secciones */
+@media (max-width: 1100px) {
+  .catalog-banner,
+  .quick-order-card {
+    grid-template-columns: 1fr;
+  }
+
+  .category-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .catalog-banner {
+    align-items: stretch;
+  }
+
+  .section-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .category-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .store-section,
+  .quick-order-card,
+  .catalog-banner {
+    padding: 20px;
+    border-radius: 24px;
+  }
+}
+/* ===== MODO VISITANTE PUBLICO ===== */
+
+.public-mode {
+  display: block;
+  width: 100%;
+}
+
+.public-mode .main-content {
+  width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+.public-mode .content-area {
+  padding: 0;
+}
+
+.public-mode .topbar {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  width: 100%;
+  padding: 18px 42px;
+  background: rgba(255,255,255,.92);
+  backdrop-filter: blur(14px);
+  border-bottom: 1px solid rgba(62,130,0,.12);
+}
+
+.public-mode .topbar h2 {
+  font-size: 34px;
+  font-weight: 950;
+  letter-spacing: -.03em;
+}
+
+.public-mode .topbar .eyebrow {
+  font-size: 13px;
+  color: var(--primary-dark);
+}
+
+.public-mode .dashboard-page {
+  width: 100%;
+}
+
+.public-mode .client-hero,
+.public-mode .store-section,
+.public-mode .quick-order-card,
+.public-mode .catalog-banner {
+  width: min(1400px, calc(100% - 60px));
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.public-mode .client-hero {
+  margin-top: 28px;
+}
+
+.public-mode .store-section,
+.public-mode .quick-order-card {
+  margin-top: 26px;
+}
+
+.public-mode .product-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.public-mode .category-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.public-mode .client-hero h1 {
+  font-size: clamp(48px, 6vw, 82px);
+  max-width: 920px;
+  line-height: .95;
+}
+
+.public-mode .client-hero p {
+  font-size: 20px;
+  max-width: 850px;
+}
+
+.public-mode .hero-actions {
+  margin-top: 28px;
+}
+
+.public-mode .btn {
+  padding: 14px 22px;
+  font-size: 15px;
+}
+
+.public-mode .product-card {
+  overflow: hidden;
+}
+
+.public-mode .product-art {
+  height: 240px;
+}
+
+.public-mode .product-body {
+  padding: 24px;
+}
+
+.public-mode .product-body h3 {
+  font-size: 22px;
+}
+
+.public-mode .category-card {
+  min-height: 230px;
+}
+
+.public-mode .category-card h3 {
+  font-size: 22px;
+}
+
+.public-mode .quick-order-card textarea {
+  min-height: 170px;
+}
+
+.public-mode footer {
+  margin-top: 40px;
+}
+
+/* ===== RESPONSIVE PUBLICO ===== */
+
+@media (max-width: 1200px) {
+
+  .public-mode .product-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .public-mode .category-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+
+  .public-mode .topbar {
+    padding: 16px 20px;
+  }
+
+  .public-mode .client-hero,
+  .public-mode .store-section,
+  .public-mode .quick-order-card,
+  .public-mode .catalog-banner {
+    width: calc(100% - 24px);
+  }
+
+  .public-mode .client-hero h1 {
+    font-size: 44px;
+  }
+
+  .public-mode .product-grid,
+  .public-mode .category-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .public-mode .topbar h2 {
+    font-size: 26px;
+  }
+}
