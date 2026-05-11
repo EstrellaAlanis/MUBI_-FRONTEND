@@ -32,6 +32,7 @@ export default function App() {
   });
 
   const role = user?.role || 'cliente';
+  const isPublicVisitor = !user && role === 'cliente';
 
   const handleLogin = (loggedUser) => {
     setUser(loggedUser);
@@ -48,18 +49,21 @@ export default function App() {
   }, [user]);
 
   return (
-    <div className={`app-shell ${role === 'cliente' ? 'client-mode' : 'admin-mode'}`}>
-      <Sidebar role={role} user={user} />
+    <div className={`app-shell ${role === 'cliente' ? 'client-mode' : 'admin-mode'} ${isPublicVisitor ? 'public-mode' : ''}`}>
+      {!isPublicVisitor && <Sidebar role={role} user={user} />}
+
       <main className="main-content">
         <Topbar role={role} user={user} onLogout={handleLogout} />
+
         <section className="content-area">
           <Routes>
             <Route path="/" element={<Dashboard role={role} user={user} />} />
-            <Route path="/login" element={<Login onLogin={handleLogin} />} />
-            <Route path="/productos" element={<Productos role={role} />} />
+            <Route path="/login" element={ user? <Navigate to="/" replace />: <Login onLogin={handleLogin} />}/> // agregado para redirigir a dashboard si ya está logueado
+            <Route path="/productos" element={<Productos role={role} user={user} />} />
             <Route path="/clientes" element={<RequireAdmin user={user}><Clientes /></RequireAdmin>} />
             <Route path="/usuarios" element={<RequireAdmin user={user}><Usuarios /></RequireAdmin>} />
             <Route path="/pedidos" element={<Pedidos role={role} />} />
+            <Route path="/pedido-personalizado" element={<Pedidos role={role} user={user} />} />
             <Route path="/pagos" element={<Pagos role={role} />} />
             <Route path="/materiales" element={<RequireAdmin user={user}><Materiales /></RequireAdmin>} />
             <Route path="/contacto" element={<Contacto role={role} />} />
