@@ -66,7 +66,8 @@ export default function Dashboard({ role, user }) {
     }
 
     localStorage.setItem('ideaPedidoMubi', texto);
-    window.location.href = '/pedidos';
+    // window.location.href = '/pedidos'; se cambio este por el de abajo
+    window.location.href = '/pedido-personalizado';
   };
 
   if (role === 'cliente' && !user) {
@@ -144,7 +145,7 @@ export default function Dashboard({ role, user }) {
 
                   <div className="product-footer">
                     <strong>S/ {Number(p.precio || 0).toFixed(2)}</strong>
-                    <a className="btn btn-sm btn-outline-dark" href="/pedidos">
+                    <a className="btn btn-sm btn-outline-dark" href="/pedido-personalizado">
                       Pedir
                     </a>
                   </div>
@@ -206,7 +207,7 @@ export default function Dashboard({ role, user }) {
               <a href="/productos" className="btn btn-primary">
                 Ver catálogo
               </a>
-              <a href="/pedidos" className="btn btn-glass">
+              <a href="/pedido-personalizado" className="btn btn-glass">
                 Mis pedidos
               </a>
             </div>
@@ -242,7 +243,7 @@ export default function Dashboard({ role, user }) {
 
                   <div className="product-footer">
                     <strong>S/ {Number(p.precio || 0).toFixed(2)}</strong>
-                    <a className="btn btn-sm btn-outline-dark" href="/pedidos">
+                    <a className="btn btn-sm btn-outline-dark" href="/pedido-personalizado">
                       Pedir
                     </a>
                   </div>

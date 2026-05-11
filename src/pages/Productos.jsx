@@ -106,7 +106,8 @@ export default function Productos({ role, user }) {
       `Deseo pedir el producto "${p.nombre}" de la categoría ${p.categoria || 'MUBI'}.`
     );
 
-    window.location.href = user ? '/pedidos' : '/login';
+    // window.location.href = user ? '/pedidos' : '/login';
+    window.location.href = user ? '/pedido-personalizado' : '/login';
   };
 
   return (
@@ -227,7 +228,7 @@ export default function Productos({ role, user }) {
         </form>
       )}
 
-      <div className="filter-bar mt-4">
+      {/* <div className="filter-bar mt-4">
         <input
           className="form-control"
           placeholder="Buscar producto, diseño o categoría..."
@@ -247,7 +248,48 @@ export default function Productos({ role, user }) {
             </option>
           ))}
         </select>
-      </div>
+      </div> */}
+      <div className="search-access-box mt-4">
+  <div className="search-main">
+    <i className="bi bi-search"></i>
+    <input
+      className="form-control"
+      placeholder="Buscar polos, anime, escolares, deportivos..."
+      value={search}
+      onChange={(e) => setSearch(e.target.value)}
+    />
+  </div>
+
+  <select
+    className="form-select"
+    value={filter}
+    onChange={(e) => setFilter(e.target.value)}
+  >
+    <option value="">Todas las categorías</option>
+    {categorias.map((c) => (
+      <option key={c.idCategoria} value={c.idCategoria}>
+        {c.nombreCategoria}
+      </option>
+    ))}
+  </select>
+
+  {search && (
+    <div className="search-suggestions">
+      {filtered.slice(0, 5).map((p) => (
+        <button
+          key={p.idProducto}
+          type="button"
+          onClick={() => setSearch(p.nombre)}
+        >
+          <i className="bi bi-bag-heart"></i>
+          <span>{p.nombre}</span>
+          <small>{p.categoria || 'MUBI'}</small>
+        </button>
+      ))}
+    </div>
+  )}
+</div>
+
 
       <div className="product-grid">
         {filtered.map((p, index) => (

@@ -58,11 +58,12 @@ export default function App() {
         <section className="content-area">
           <Routes>
             <Route path="/" element={<Dashboard role={role} user={user} />} />
-            <Route path="/login" element={<Login onLogin={handleLogin} />} />
+            <Route path="/login" element={ user? <Navigate to="/" replace />: <Login onLogin={handleLogin} />}/> // agregado para redirigir a dashboard si ya está logueado
             <Route path="/productos" element={<Productos role={role} user={user} />} />
             <Route path="/clientes" element={<RequireAdmin user={user}><Clientes /></RequireAdmin>} />
             <Route path="/usuarios" element={<RequireAdmin user={user}><Usuarios /></RequireAdmin>} />
             <Route path="/pedidos" element={<Pedidos role={role} />} />
+            <Route path="/pedido-personalizado" element={<Pedidos role={role} user={user} />} />
             <Route path="/pagos" element={<Pagos role={role} />} />
             <Route path="/materiales" element={<RequireAdmin user={user}><Materiales /></RequireAdmin>} />
             <Route path="/contacto" element={<Contacto role={role} />} />
