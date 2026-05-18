@@ -36,14 +36,18 @@ export default function Login({ onLogin }) {
   const [message, setMessage] = useState('');
 
   const [registro, setRegistro] = useState({
-    nombres: '',
-    apellidos: '',
-    correo: '',
-    telefono: '',
-    direccion: '',
-    documentoIdentidad: '',
-    contrasena: ''
-  });
+  nombres: '',
+  apellidos: '',
+  correo: '',
+  telefono: '',
+  direccion: '',
+  referenciaDireccion: '',
+  tipoCliente: 'persona',
+  ruc: '',
+  razonSocial: '',
+  documentoIdentidad: '',
+  contrasena: ''
+});
 
   const buildSession = (user, forcedRole = null) => {
     const rolTexto = String(user.rol || '').toLowerCase();
@@ -81,14 +85,18 @@ export default function Login({ onLogin }) {
 
     try {
       await api.post(endpoints.clientes, {
-        nombres: registro.nombres,
-        apellidos: registro.apellidos,
-        correo: registro.correo,
-        telefono: registro.telefono,
-        direccion: registro.direccion,
-        documentoIdentidad: registro.documentoIdentidad,
-        contrasena: registro.contrasena,
-      });
+      nombres: registro.nombres,
+      apellidos: registro.apellidos,
+      correo: registro.correo,
+      telefono: registro.telefono,
+      direccion: registro.direccion,
+      referenciaDireccion: registro.referenciaDireccion,
+      tipoCliente: registro.tipoCliente,
+      ruc: registro.tipoCliente === 'empresa' ? registro.ruc : '',
+      razonSocial: registro.tipoCliente === 'empresa' ? registro.razonSocial : '',
+      documentoIdentidad: registro.documentoIdentidad,
+      contrasena: registro.contrasena,
+    });
 
       setMessage('Cuenta de cliente registrada correctamente. Ahora puedes iniciar sesión o continuar tu pedido.');
       setModo('login');
@@ -305,7 +313,53 @@ export default function Login({ onLogin }) {
                 value={registro.direccion}
                 onChange={e => setRegistro({ ...registro, direccion: e.target.value })}
               />
+              <label>Referencia de dirección</label>
+                <input
+                  className="form-control"
+                  value={registro.referenciaDireccion}
+                  onChange={e => setRegistro({ ...registro, referenciaDireccion: e.target.value })}
+                  placeholder="Ejemplo: frente al parque, casa verde, segundo piso..."
+                />
 
+                <label>Tipo de cliente</label>
+                <select
+                  className="form-select"
+                  value={registro.tipoCliente}
+                  onChange={e => setRegistro({ ...registro, tipoCliente: e.target.value })}
+                >
+                  <option value="persona">Persona natural</option>
+                  <option value="empresa">Empresa</option>
+                </select>
+
+                {registro.tipoCliente === 'empresa' && (
+                  <>
+                    <div className="login-form-grid">
+                      <div>
+                        <label>RUC</label>
+                        <input
+                          className="form-control"
+                          value={registro.ruc}
+                          maxLength="11"
+                          onChange={e => setRegistro({
+                            ...registro,
+                            ruc: e.target.value.replace(/\D/g, '')
+                          })}
+                          placeholder="11 dígitos"
+                        />
+                      </div>
+
+                      <div>
+                        <label>Razón social</label>
+                        <input
+                          className="form-control"
+                          value={registro.razonSocial}
+                          onChange={e => setRegistro({ ...registro, razonSocial: e.target.value })}
+                          placeholder="Nombre legal de la empresa"
+                        />
+                      </div>
+                    </div>
+                  </>
+                )}
               <label>Contraseña</label>
               <input
                 className="form-control"
