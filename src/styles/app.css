@@ -3326,3 +3326,159 @@ label,
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(89, 255, 0, .55);
 }
+.comprobantes-page .payment-client-info {
+  padding: 14px;
+  border-radius: 16px;
+  background: rgba(89, 255, 0, .08);
+  border: 1px solid rgba(89, 255, 0, .18);
+}
+
+.invoice-print-card {
+  max-width: 900px;
+}
+
+.invoice-document {
+  background: #fff;
+  color: #111;
+  border-radius: 24px;
+  padding: 28px;
+}
+
+.invoice-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+  border-bottom: 2px solid #111;
+  padding-bottom: 18px;
+  margin-bottom: 22px;
+}
+
+.invoice-header h2 {
+  margin: 0;
+  font-size: 42px;
+  font-weight: 900;
+  color: #111;
+}
+
+.invoice-header p,
+.invoice-header small {
+  color: #444;
+}
+
+.invoice-number-box {
+  min-width: 230px;
+  border: 2px solid #111;
+  border-radius: 18px;
+  padding: 16px;
+  text-align: center;
+}
+
+.invoice-number-box span {
+  display: block;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.invoice-number-box strong {
+  display: block;
+  font-size: 24px;
+  margin: 6px 0;
+}
+
+.invoice-info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+  margin-bottom: 22px;
+}
+
+.invoice-info-grid div {
+  border: 1px solid #ddd;
+  border-radius: 16px;
+  padding: 14px;
+}
+
+.invoice-info-grid span,
+.invoice-totals span {
+  display: block;
+  color: #555;
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.invoice-info-grid strong,
+.invoice-totals strong {
+  color: #111;
+  font-size: 18px;
+}
+
+.invoice-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 22px;
+}
+
+.invoice-table th,
+.invoice-table td {
+  border-bottom: 1px solid #ddd;
+  padding: 12px;
+}
+
+.invoice-table th {
+  background: #f2f2f2;
+  color: #111;
+}
+
+.invoice-totals {
+  margin-left: auto;
+  width: min(320px, 100%);
+  display: grid;
+  gap: 10px;
+}
+
+.invoice-totals div {
+  display: flex;
+  justify-content: space-between;
+  border-bottom: 1px solid #ddd;
+  padding: 8px 0;
+}
+
+.invoice-total-final {
+  border-bottom: 2px solid #111 !important;
+}
+
+.invoice-total-final strong {
+  font-size: 24px;
+}
+
+.invoice-note {
+  margin-top: 22px;
+  background: #f5f5f5;
+  border-radius: 14px;
+  padding: 14px;
+}
+
+@media print {
+  body * {
+    visibility: hidden;
+  }
+
+  .invoice-document,
+  .invoice-document * {
+    visibility: visible;
+  }
+
+  .invoice-document {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    min-height: 100vh;
+    border-radius: 0;
+    padding: 36px;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+}

@@ -12,6 +12,7 @@ import Materiales from './pages/Materiales.jsx';
 import Contacto from './pages/Contacto.jsx';
 import Reportes from './pages/Reportes.jsx';
 import Usuarios from './pages/Usuarios.jsx';
+import Comprobantes from './pages/Comprobantes.jsx';
 
 function RequireAdmin({ user, children }) {
   if (user?.role === 'admin') return children;
@@ -98,6 +99,14 @@ export default function App() {
             <Route path="/pedidos" element={<Pedidos role={role} user={user} />} />
             <Route path="/pedido-personalizado" element={<Pedidos role={role} user={user} />} />
             <Route path="/pagos" element={<Pagos role={role} user={user} />} />
+            <Route
+              path="/comprobantes"
+              element={
+                <RequireAdmin user={user}>
+                  <Comprobantes role={role} user={user} />
+                </RequireAdmin>
+              }
+            />
 
             <Route
               path="/materiales"

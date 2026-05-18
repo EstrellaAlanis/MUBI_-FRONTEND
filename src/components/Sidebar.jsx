@@ -7,6 +7,7 @@ const adminLinks = [
   ['/clientes', 'bi-people-fill', 'Clientes'],
   ['/pedidos', 'bi-clipboard-check-fill', 'Pedidos'],
   ['/pagos', 'bi-cash-coin', 'Pagos'],
+  ['/comprobantes', 'bi-receipt-cutoff', 'Comprobantes'],
   ['/materiales', 'bi-box-seam-fill', 'Inventario'],
   ['/contacto', 'bi-chat-dots-fill', 'Contacto'],
   ['/reportes', 'bi-bar-chart-fill', 'Reportes']

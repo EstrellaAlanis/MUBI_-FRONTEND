@@ -77,5 +77,6 @@ export const endpoints = {
   pagos: '/Pagos',
   materiales: '/Materiales',
   usuarios: '/Usuarios',
-  contactos: '/Contactos'
+  contactos: '/Contactos',
+  comprobantes: '/Comprobantes'
 };
