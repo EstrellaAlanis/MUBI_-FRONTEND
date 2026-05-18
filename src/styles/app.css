@@ -1,35 +1,37 @@
+@import url('https://fonts.googleapis.com/css2?family=Archivo+Black&family=Roboto+Mono:wght@400;500;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
 :root {
-  --bg: #edf3e8;
-  --bg-2: #dfe9d8;
-  --surface: #f8f6ef;
-  --surface-2: #eef3e8;
-  --surface-3: #d6e3cf;
+  /* Paleta MUBI negro + verde neón */
+  --bg: #0b0f0d;
+  --bg-2: #111714;
+  --surface: #151b18;
+  --surface-2: #1a221e;
+  --surface-3: #202b26;
 
-  --text: #172018;
-  --text-soft: #445347;
-  --muted: #718071;
+  --text: #f4fff0;
+  --text-soft: #cfe4ce;
+  --muted: #8fa08f;
 
-  --primary: #2f5f38;
-  --primary-2: #4f7f52;
-  --primary-soft: #d8ead1;
+  --primary: #59ff00;
+  --primary-2: #95ff77;
+  --primary-soft: rgba(89, 255, 0, .14);
 
-  --accent: hsl(85, 35%, 59%);
-  --accent-2: #c4d8ba;
-  --accent-soft: #e4f0db;
+  --accent: #00c853;
+  --accent-2: #95ff77;
+  --accent-soft: rgba(149, 255, 119, .14);
 
-  --info: #6b8f77;
-  --info-soft: #ddeadd;
+  --info: #70d984;
+  --info-soft: rgba(112, 217, 132, .13);
 
-  --danger: #c95c5c;
-  --warning: #d69c4e;
+  --danger: #ff5d6c;
+  --warning: #ffc857;
 
-  --border: rgba(31, 58, 37, .16);
-  --shadow: 0 20px 55px rgba(20, 32, 21, .14);
-  --shadow-soft: 0 10px 28px rgba(20, 32, 21, .09);
+  --border: rgba(149, 255, 119, .18);
+  --shadow: 0 22px 60px rgba(0, 0, 0, .42);
+  --shadow-soft: 0 12px 34px rgba(0, 0, 0, .28);
 
-  --admin-bg: #142015;
-  --admin-bg-2: #2a482b;
-  --admin-accent: #c4d8ba;
+  --admin-bg: #0b0f0d;
+  --admin-bg-2: #16221b;
+  --admin-accent: #59ff00;
 }
 
 /* ===== BASE ===== */
@@ -48,7 +50,7 @@ body {
     radial-gradient(circle at 12% 10%, rgba(157, 187, 114, .18), transparent 28%),
     radial-gradient(circle at 88% 6%, rgba(79, 127, 82, .18), transparent 30%),
     linear-gradient(180deg, var(--bg), var(--bg-2));
-  font-family: "Nunito", "Segoe UI", system-ui, sans-serif;
+  font-family: "Space Grotesk", "Segoe UI", system-ui, sans-serif;
 }
 
 a {
@@ -2810,4 +2812,517 @@ select {
 .payment-file-selected i {
   color: var(--danger);
   font-size: 22px;
+}
+
+/* =====================================================
+   MUBI NEON FINAL OVERRIDE
+   Identidad visual: negro + verde, sin romper estructura
+===================================================== */
+
+/* Base general */
+body {
+  color: var(--text);
+  background:
+    radial-gradient(circle at 12% 8%, rgba(89, 255, 0, .12), transparent 30%),
+    radial-gradient(circle at 86% 16%, rgba(0, 200, 83, .12), transparent 28%),
+    linear-gradient(180deg, #0b0f0d 0%, #111714 48%, #0b0f0d 100%) !important;
+}
+h1,
+h2,
+h3,
+h4,
+.brand h1,
+.client-brand strong,
+.mubi-web-hero h1,
+.mubi-client-hero h1,
+.admin-dashboard-hero h1,
+.login-brand-panel h2,
+.catalog-banner h1,
+.catalog-banner h2,
+.page-header h2 {
+  font-family: "Archivo Black", "Space Grotesk", sans-serif;
+  letter-spacing: -0.04em;
+}
+
+.mubi-web-hero h1,
+.mubi-video-hero h1,
+.catalog-banner h1,
+.catalog-banner h2 {
+  font-style: italic;
+  text-transform: uppercase;
+}
+
+button,
+.btn,
+.nav-item,
+.client-menu a,
+.badge-soft,
+.status-pill,
+.category-pill {
+  font-family: "Space Grotesk", "Segoe UI", system-ui, sans-serif;
+}
+
+.product-footer strong,
+.report-card strong,
+.stat-card h3,
+.admin-kpi-card strong,
+.status-box strong,
+.payment-order-summary strong {
+  font-family: "Roboto Mono", monospace;
+}
+
+.website-mode {
+  background:
+    radial-gradient(circle at 12% 8%, rgba(89, 255, 0, .13), transparent 30%),
+    radial-gradient(circle at 86% 12%, rgba(0, 200, 83, .12), transparent 28%),
+    linear-gradient(180deg, #0b0f0d 0%, #111714 50%, #0b0f0d 100%) !important;
+}
+
+/* Textos */
+h1, h2, h3, h4, h5, h6,
+.topbar h2,
+.page-header h2,
+.product-body h3,
+.client-order-card h3,
+.client-action-card h3,
+.mubi-section-title h2,
+.catalog-banner h2,
+.catalog-banner h1,
+.quick-order-card h2,
+.admin-dashboard-hero h1 {
+  color: var(--text) !important;
+}
+
+p,
+.page-header p,
+.product-body p,
+.catalog-banner p,
+.mubi-section-title p,
+.quick-order-card p,
+.client-orders-hero p,
+.client-order-card p,
+.hero-card p,
+.client-hero p,
+.login-brand-panel p {
+  color: var(--text-soft) !important;
+}
+
+.eyebrow,
+.mubi-kicker,
+.mubi-section-title span,
+.client-order-number {
+  color: var(--primary) !important;
+}
+
+/* Cards y contenedores */
+.panel-card,
+.auth-card,
+.product-card,
+.stat-card,
+.report-card,
+.catalog-banner,
+.quick-order-card,
+.category-card,
+.mubi-category-card,
+.client-order-card,
+.client-orders-hero,
+.admin-dashboard-hero,
+.admin-hero-mini,
+.admin-kpi-card,
+.admin-alert-card,
+.status-box,
+.sidebar-card,
+.login-card,
+.login-brand-panel,
+.mubi-client-summary div,
+.client-action-card,
+.search-access-box,
+.material-card,
+.pedido-modal,
+.last-order-box,
+.admin-shortcuts a,
+.admin-payment-item,
+.admin-stock-item,
+.payment-client-info {
+  background:
+    linear-gradient(145deg, rgba(26, 34, 30, .96), rgba(17, 23, 20, .96)) !important;
+  border: 1px solid var(--border) !important;
+  box-shadow: var(--shadow-soft) !important;
+  color: var(--text) !important;
+}
+
+/* Navbar cliente */
+.client-web-navbar,
+.topbar {
+  background: rgba(11, 15, 13, .92) !important;
+  border-bottom: 1px solid rgba(149, 255, 119, .18) !important;
+  box-shadow: 0 12px 35px rgba(0, 0, 0, .36) !important;
+}
+
+.client-brand strong,
+.client-session,
+.session-chip {
+  color: var(--text) !important;
+}
+
+.client-brand span,
+.brand span,
+.sidebar-card p,
+.sidebar-card small {
+  color: var(--muted) !important;
+}
+
+.client-brand-logo,
+.brand-logo,
+.login-logo-icon,
+.stat-icon,
+.mubi-category-icon,
+.category-icon,
+.page-icon {
+  background: linear-gradient(135deg, var(--primary), var(--accent)) !important;
+  color: #0b0f0d !important;
+  box-shadow: 0 14px 34px rgba(89, 255, 0, .20) !important;
+}
+
+.client-menu a {
+  color: var(--text-soft) !important;
+}
+
+.client-menu a:hover,
+.client-menu a.active {
+  color: var(--primary) !important;
+}
+
+.client-menu a.active::after {
+  background: var(--primary) !important;
+  box-shadow: 0 0 14px rgba(89, 255, 0, .75);
+}
+
+/* Sidebar admin */
+.sidebar {
+  background:
+    radial-gradient(circle at 24% 0%, rgba(89, 255, 0, .12), transparent 34%),
+    linear-gradient(180deg, #0b0f0d, #111714 55%, #0b0f0d) !important;
+  border-right: 1px solid rgba(149, 255, 119, .20) !important;
+}
+
+.nav-item {
+  color: var(--text-soft) !important;
+}
+
+.nav-item:hover,
+.nav-item.active {
+  background: rgba(89, 255, 0, .11) !important;
+  color: var(--text) !important;
+  border-color: rgba(89, 255, 0, .30) !important;
+}
+
+.nav-item i {
+  color: var(--primary) !important;
+}
+
+/* Botones */
+.btn-primary,
+.client-login-btn {
+  background: linear-gradient(135deg, var(--primary), var(--accent)) !important;
+  border-color: transparent !important;
+  color: #0b0f0d !important;
+  box-shadow: 0 14px 32px rgba(89, 255, 0, .22) !important;
+}
+
+.btn-primary:hover,
+.client-login-btn:hover {
+  filter: brightness(1.05) saturate(1.1);
+  color: #0b0f0d !important;
+  transform: translateY(-2px);
+}
+
+.btn-outline-dark,
+.btn-glass,
+.btn-google,
+.client-login-btn.outline {
+  background: rgba(255, 255, 255, .04) !important;
+  color: var(--text) !important;
+  border: 1px solid rgba(149, 255, 119, .22) !important;
+}
+
+.btn-outline-dark:hover,
+.btn-glass:hover,
+.btn-google:hover,
+.client-login-btn.outline:hover {
+  background: rgba(89, 255, 0, .12) !important;
+  color: var(--primary) !important;
+  border-color: rgba(89, 255, 0, .40) !important;
+}
+
+/* Formularios */
+.form-control,
+.form-select,
+.quick-order-form textarea {
+  background: rgba(11, 15, 13, .82) !important;
+  color: var(--text) !important;
+  border: 1px solid rgba(149, 255, 119, .22) !important;
+}
+
+.form-control::placeholder,
+.quick-order-form textarea::placeholder {
+  color: rgba(207, 228, 206, .58) !important;
+}
+
+.form-control:focus,
+.form-select:focus,
+.quick-order-form textarea:focus {
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 .22rem rgba(89, 255, 0, .16) !important;
+}
+
+label,
+.form-card label {
+  color: var(--text) !important;
+}
+
+/* Badges y estados */
+.badge-soft,
+.status-pill,
+.category-pill,
+.mubi-product-info span,
+.preview-label {
+  background: rgba(89, 255, 0, .13) !important;
+  color: var(--primary-2) !important;
+  border: 1px solid rgba(89, 255, 0, .24) !important;
+}
+
+.status-pill.status-cancelado,
+.tracking-cancelado {
+  background: rgba(255, 93, 108, .12) !important;
+  color: var(--danger) !important;
+  border-color: rgba(255, 93, 108, .22) !important;
+}
+
+/* Hero con video más conectado a la referencia */
+.mubi-video-hero {
+  min-height: 680px !important;
+  background: #0b0f0d !important;
+}
+
+.mubi-hero-bg-video {
+  filter: brightness(.78) contrast(1.16) saturate(1.18) !important;
+}
+
+.mubi-video-hero .mubi-hero-overlay {
+  background:
+    linear-gradient(90deg, rgba(5, 8, 6, .74) 0%, rgba(5, 8, 6, .46) 42%, rgba(5, 8, 6, .16) 100%),
+    linear-gradient(180deg, rgba(5, 8, 6, .08), rgba(5, 8, 6, .38)) !important;
+}
+
+.mubi-video-hero h1 {
+  color: #ffffff !important;
+  text-shadow: 0 16px 38px rgba(0, 0, 0, .58) !important;
+}
+
+.mubi-video-hero p {
+  color: rgba(244, 255, 240, .88) !important;
+}
+
+.mubi-video-hero .mubi-kicker {
+  color: var(--primary) !important;
+}
+
+.mubi-video-hero .mubi-hero-points span {
+  background: rgba(11, 15, 13, .52) !important;
+  color: var(--text) !important;
+  border: 1px solid rgba(89, 255, 0, .25) !important;
+}
+
+.mubi-video-hero .mubi-hero-points i {
+  color: var(--primary) !important;
+}
+
+/* Hero sin video / banners */
+.mubi-web-hero,
+.mubi-client-hero,
+.hero-card,
+.client-hero,
+.quick-order-card,
+.catalog-banner,
+.website-mode .page-header {
+  background:
+    radial-gradient(circle at 82% 18%, rgba(89, 255, 0, .12), transparent 30%),
+    radial-gradient(circle at 18% 18%, rgba(0, 200, 83, .10), transparent 30%),
+    linear-gradient(135deg, rgba(26, 34, 30, .98), rgba(17, 23, 20, .98)) !important;
+}
+
+/* Productos */
+.product-art,
+.mubi-product-img {
+  background:
+    radial-gradient(circle at 50% 50%, rgba(89, 255, 0, .18), transparent 38%),
+    linear-gradient(135deg, #111714, #202b26) !important;
+}
+
+.product-art::before {
+  background: rgba(89, 255, 0, .12) !important;
+}
+
+.product-art::after {
+  color: rgba(149, 255, 119, .24) !important;
+}
+
+.product-art i,
+.mubi-product-img i,
+.empty-state i,
+.client-action-card i,
+.material-card i {
+  color: var(--primary) !important;
+}
+
+.product-footer,
+.mubi-product-info div {
+  border-top: 1px solid rgba(149, 255, 119, .16) !important;
+}
+
+/* Tablas */
+.table {
+  color: var(--text) !important;
+}
+
+.table thead th {
+  color: var(--primary-2) !important;
+  border-bottom-color: rgba(149, 255, 119, .20) !important;
+}
+
+.table td {
+  color: var(--text-soft) !important;
+  border-color: rgba(149, 255, 119, .12) !important;
+}
+
+.table tbody tr:hover {
+  background: rgba(89, 255, 0, .05) !important;
+}
+
+/* Tracking */
+.tracking-step span {
+  background: rgba(255, 255, 255, .08) !important;
+  color: var(--muted) !important;
+}
+
+.tracking-step.active {
+  color: var(--primary) !important;
+}
+
+.tracking-step.active span {
+  background: var(--primary) !important;
+  color: #0b0f0d !important;
+  box-shadow: 0 0 18px rgba(89, 255, 0, .35);
+}
+
+.tracking-step.active small {
+  color: var(--primary-2) !important;
+}
+
+/* Uploads y previews */
+.design-preview,
+.excel-upload-box,
+.payment-flow-info,
+.payment-order-summary div,
+.payment-preview,
+.payment-file-selected,
+.summary-box,
+.client-form-note,
+.client-order-track,
+.client-order-summary div,
+.last-order-box,
+.pedido-detail-grid div,
+.pedido-detail-card {
+  background: rgba(11, 15, 13, .62) !important;
+  border: 1px solid rgba(149, 255, 119, .20) !important;
+}
+
+.design-thumb {
+  background: rgba(11, 15, 13, .72) !important;
+  border: 1px solid rgba(149, 255, 119, .20) !important;
+  color: var(--text) !important;
+}
+
+.design-thumb span,
+.excel-download-btn,
+.modal-design-grid span {
+  color: var(--primary) !important;
+}
+
+/* Modal */
+.modal-backdrop-custom {
+  background: rgba(0, 0, 0, .70) !important;
+  backdrop-filter: blur(6px);
+}
+
+/* Login */
+.login-benefits div {
+  background: rgba(11, 15, 13, .58) !important;
+  border-color: rgba(149, 255, 119, .20) !important;
+  color: var(--text) !important;
+}
+
+.login-switch,
+.login-subtitle,
+.guest-link,
+.helper-text,
+.product-body p,
+.mubi-product-info p {
+  color: var(--muted) !important;
+}
+
+.login-switch button,
+.guest-link:hover {
+  color: var(--primary) !important;
+}
+
+/* Footer */
+.mubi-footer {
+  background: linear-gradient(135deg, #0b0f0d, #111714) !important;
+  border-top: 1px solid rgba(149, 255, 119, .18);
+  color: var(--text) !important;
+}
+
+/* Alerts */
+.alert-success {
+  background: rgba(89, 255, 0, .13) !important;
+  color: var(--primary-2) !important;
+  border: 1px solid rgba(89, 255, 0, .24) !important;
+}
+
+.alert-danger {
+  background: rgba(255, 93, 108, .13) !important;
+  color: #ff9aa4 !important;
+  border: 1px solid rgba(255, 93, 108, .24) !important;
+}
+
+.alert-warning {
+  background: rgba(255, 200, 87, .13) !important;
+  color: #ffd88d !important;
+  border: 1px solid rgba(255, 200, 87, .24) !important;
+}
+
+/* Selecciones / scroll */
+::selection {
+  background: rgba(89, 255, 0, .36);
+  color: #fff;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0b0f0d;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(89, 255, 0, .36);
+  border-radius: 999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(89, 255, 0, .55);
 }
