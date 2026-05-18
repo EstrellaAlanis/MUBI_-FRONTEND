@@ -50,12 +50,65 @@ export default function Dashboard({ role, user }) {
     (p) => String(p.estadoPedido).toLowerCase() === 'pendiente'
   ).length;
 
-  const categorias = useMemo(() => {
-    const nombres = productos.map((p) => p.categoria).filter(Boolean);
-    return [...new Set(nombres)].slice(0, 6);
-  }, [productos]);
+  const confirmados = pedidos.filter(
+    (p) => String(p.estadoPedido).toLowerCase() === 'confirmado'
+  ).length;
 
-  const productosDestacados = productos.slice(0, 6);
+  const pagados = pedidos.filter(
+    (p) => String(p.estadoPedido).toLowerCase() === 'pagado'
+  ).length;
+
+  const enProceso = pedidos.filter(
+    (p) => String(p.estadoPedido).toLowerCase() === 'en_proceso'
+  ).length;
+
+  const entregados = pedidos.filter(
+    (p) => String(p.estadoPedido).toLowerCase() === 'entregado'
+  ).length;
+
+  const productosDestacados = productos.slice(0, 3);
+
+  const clienteActual = clientes.find(c =>
+    Number(c.idUsuario) === Number(user?.idUsuario) ||
+    String(c.correo || '').toLowerCase() === String(user?.correo || '').toLowerCase()
+  );
+
+  const pedidosCliente = clienteActual
+    ? pedidos.filter(p => Number(p.idCliente) === Number(clienteActual.idCliente))
+    : [];
+
+  const pagosCliente = clienteActual
+    ? pagos.filter(pg => pedidosCliente.some(p => Number(p.idPedido) === Number(pg.idPedido)))
+    : [];
+
+  const totalPagosCliente = pagosCliente.reduce((acc, p) => acc + Number(p.monto || 0), 0);
+  const pedidosHoy = pedidos.filter(p => {
+  const fecha = new Date(p.fechaPedido);
+  const hoy = new Date();
+
+  return (
+    fecha.getDate() === hoy.getDate() &&
+    fecha.getMonth() === hoy.getMonth() &&
+    fecha.getFullYear() === hoy.getFullYear()
+  );
+}).length;
+
+const ultimoPedido = pedidos[0];
+
+const ultimosPagos = pagos.slice(0, 5);
+
+const materialesBajos = materiales.filter(
+  m => Number(m.stockActual) <= Number(m.stockMinimo)
+);
+
+const porcentajePedidosAtendidos = pedidos.length
+  ? Math.round((entregados / pedidos.length) * 100)
+  : 0;
+
+const ingresosPendientes = pedidos.reduce(
+  (acc, p) => acc + Number(p.saldoPendiente || 0),
+  0
+);
 
   const enviarIdeaPedido = () => {
     const texto = ideaPedido.trim();
@@ -66,102 +119,133 @@ export default function Dashboard({ role, user }) {
     }
 
     localStorage.setItem('ideaPedidoMubi', texto);
-    // window.location.href = '/pedidos'; se cambio este por el de abajo
-    window.location.href = '/pedido-personalizado';
+    window.location.href = user ? '/pedido-personalizado' : '/login';
+  };
+
+  const pedirProducto = (p) => {
+    localStorage.setItem(
+      'ideaPedidoMubi',
+      `Deseo pedir el producto "${p.nombre}" de la categoría ${p.categoria || 'MUBI'}.`
+    );
+
+    window.location.href = user ? '/pedido-personalizado' : '/login';
   };
 
   if (role === 'cliente' && !user) {
     return (
-      <div className="fade-in">
+      <div className="mubi-website fade-in">
         {error && (
           <div className="alert alert-warning">
             No se pudo conectar al backend: {error}
           </div>
         )}
 
-        <section className="client-hero public-store-hero">
-          <div>
-            <span className="badge-soft">Tienda online MUBI</span>
-            <h1>Polos sublimados y personalizados hechos a tu estilo.</h1>
+        <section className="mubi-web-hero mubi-video-hero">
+           <video
+            className="mubi-hero-bg-video"
+            src="public/videos/video_hero.mp4"
+            autoPlay
+            muted
+            loop
+            playsInline
+          ></video>
+          <div className="mubi-hero-overlay"></div>
+
+          <div className="mubi-hero-content">
+            <span className="mubi-kicker">MUBI TEXTIL STORE</span>
+
+            <h1>Polos personalizados para colegios, equipos y eventos.</h1>
+
             <p>
-              Explora diseños, revisa categorías y solicita tu polo personalizado sin
-              complicarte. Primero eliges o describes tu idea, y al confirmar el pedido
-              podrás iniciar sesión.
+              Explora modelos, elige una base y envía tu idea de forma sencilla.
+              Nosotros revisamos tu pedido y te ayudamos con el diseño.
             </p>
 
-            <div className="hero-actions">
+            <div className="mubi-hero-actions">
               <a href="/productos" className="btn btn-primary">
                 Ver catálogo
               </a>
+
               <a href="#pedido-rapido" className="btn btn-glass">
-                Realizar pedido
+                Hacer pedido
               </a>
             </div>
+
+            <div className="mubi-hero-points">
+              <span><i className="bi bi-check-circle-fill"></i> Diseños personalizados</span>
+              <span><i className="bi bi-check-circle-fill"></i> Escolares y deportivos</span>
+              <span><i className="bi bi-check-circle-fill"></i> Atención rápida</span>
+            </div>
           </div>
+
+          {/* <div className="mubi-hero-card">
+            <div className="shirt-preview">
+              <i className="bi bi-tshirt"></i>
+              <strong>Tu diseño aquí</strong>
+              <span>Personaliza tu polo</span>
+            </div>
+          </div> */}
         </section>
 
-        <section className="store-section mt-4">
-          <div className="section-heading">
-            <div>
-              <span className="eyebrow">Categorías</span>
-              <h2>Elige el tipo de polo que necesitas</h2>
-            </div>
-            <a href="/productos" className="small-link">Ver todos</a>
+        <section className="mubi-section">
+          <div className="mubi-section-title">
+            <span>Catálogo</span>
+            <h2>Productos destacados</h2>
+            <p>Elige un modelo y úsalo como base para tu pedido personalizado.</p>
           </div>
 
-          <div className="category-grid">
-            {(categorias.length ? categorias : ['Urbanos', 'Anime', 'Pareja', 'Deportivos', 'Escolares', 'Publicitarios']).map((cat, index) => (
-              <article className="category-card" key={cat}>
-                <div className={`category-icon cat-${index % 4}`}>
-                  <i className="bi bi-stars"></i>
-                </div>
-                <h3>{cat}</h3>
-                <p>Diseños personalizados según tu idea, evento o estilo.</p>
-              </article>
-            ))}
-          </div>
-        </section>
-
-        <section className="store-section mt-4">
-          <div className="section-heading">
-            <div>
-              <span className="eyebrow">Trabajos y diseños</span>
-              <h2>Modelos que puedes personalizar</h2>
-            </div>
-            <a href="/productos" className="small-link">Explorar catálogo</a>
-          </div>
-
-          <div className="product-grid">
+          <div className="mubi-product-showcase">
             {productosDestacados.map((p, index) => (
-              <article className="product-card product-card-premium" key={p.idProducto}>
-                <div className={`product-art art-${index % 4}`}>
-                  <i className="bi bi-tshirt"></i>
+              <article className="mubi-product-card" key={p.idProducto}>
+                <div className={`mubi-product-img img-${index}`}>
+                  <i className="bi bi-bag-heart-fill"></i>
                 </div>
 
-                <div className="product-body">
-                  <span className="status-pill">{p.categoria || 'MUBI'}</span>
+                <div className="mubi-product-info">
+                  <span>{p.categoria || 'MUBI'}</span>
                   <h3>{p.nombre}</h3>
                   <p>{p.descripcion || 'Polo personalizable con diseño a elección del cliente.'}</p>
 
-                  <div className="product-footer">
+                  <div>
                     <strong>S/ {Number(p.precio || 0).toFixed(2)}</strong>
-                    <a className="btn btn-sm btn-outline-dark" href="/pedido-personalizado">
+                    <button className="btn btn-sm btn-primary" onClick={() => pedirProducto(p)}>
                       Pedir
-                    </a>
+                    </button>
                   </div>
                 </div>
               </article>
             ))}
+
+            {!productosDestacados.length && (
+              <article className="mubi-product-card">
+                <div className="mubi-product-img">
+                  <i className="bi bi-bag-heart-fill"></i>
+                </div>
+
+                <div className="mubi-product-info">
+                  <span>MUBI</span>
+                  <h3>Producto personalizable</h3>
+                  <p>Agrega productos desde el panel administrador para mostrarlos aquí.</p>
+
+                  <div>
+                    <strong>S/ 0.00</strong>
+                    <a className="btn btn-sm btn-primary" href="/productos">
+                      Ver catálogo
+                    </a>
+                  </div>
+                </div>
+              </article>
+            )}
           </div>
         </section>
 
-        <section className="quick-order-card mt-4" id="pedido-rapido">
+        <section className="quick-order-card" id="pedido-rapido">
           <div>
             <span className="badge-soft">Pedido rápido</span>
-            <h2>Describe cómo deseas tu polo</h2>
+            <h2>Cuéntanos qué deseas</h2>
             <p>
-              Cuéntanos el diseño, color, talla, cantidad o temática. Luego podrás
-              continuar con el registro del pedido.
+              Escribe el tipo de polo, cantidad, tallas, colores o temática.
+              Luego podrás adjuntar el diseño frontal y posterior.
             </p>
           </div>
 
@@ -169,7 +253,7 @@ export default function Dashboard({ role, user }) {
             <textarea
               value={ideaPedido}
               onChange={(e) => setIdeaPedido(e.target.value)}
-              placeholder="Ejemplo: Quiero 3 polos negros con diseño de anime, talla M, con nombre personalizado..."
+              placeholder="Ejemplo: 20 polos deportivos con nombres y números para campeonato..."
             />
 
             <button className="btn btn-primary" onClick={enviarIdeaPedido}>
@@ -177,75 +261,131 @@ export default function Dashboard({ role, user }) {
             </button>
 
             <small>
-              No necesitas iniciar sesión para explorar. Se solicitará acceso al confirmar pedido o pago.
+              Para confirmar el pedido se solicitará iniciar sesión o registrarse como cliente.
             </small>
           </div>
         </section>
+
+        <footer className="mubi-footer">
+          <div>
+            <h2>MUBI</h2>
+            <p>Polos personalizados para promociones, equipos y eventos.</p>
+          </div>
+
+          <div>
+            <strong>Productos</strong>
+            <p>Escolares, deportivos sublimados y diseños personalizados.</p>
+          </div>
+
+          <div>
+            <strong>Atención</strong>
+            <p>Revisión del pedido, diseño y seguimiento desde la web.</p>
+          </div>
+        </footer>
       </div>
     );
   }
 
   if (role === 'cliente' && user) {
     return (
-      <div className="fade-in">
+      <div className="mubi-client-home fade-in">
         {error && (
           <div className="alert alert-warning">
             No se pudo conectar al backend: {error}
           </div>
         )}
 
-        <section className="client-hero">
+        <section className="mubi-client-hero">
           <div>
-            <span className="badge-soft">Área del cliente</span>
-            <h1>Bienvenido a tu espacio MUBI.</h1>
+            <span className="mubi-kicker">ÁREA DEL CLIENTE</span>
+
+            <h1>Hola, {user.nombre || 'cliente'}.</h1>
+
             <p>
-              Revisa tus pedidos, consulta pagos pendientes y solicita nuevos diseños
-              personalizados.
+              Desde aquí puedes hacer un nuevo pedido, revisar su estado y consultar tus pagos.
             </p>
 
-            <div className="hero-actions">
-              <a href="/productos" className="btn btn-primary">
+            <div className="mubi-hero-actions">
+              <a href="/pedido-personalizado" className="btn btn-primary">
+                Hacer nuevo pedido
+              </a>
+
+              <a href="/productos" className="btn btn-glass">
                 Ver catálogo
               </a>
-              <a href="/pedido-personalizado" className="btn btn-glass">
-                Mis pedidos
-              </a>
+            </div>
+          </div>
+
+          <div className="mubi-client-summary">
+            <div>
+              <span>Mis pedidos</span>
+              <strong>{pedidosCliente.length}</strong>
+            </div>
+
+            <div>
+              <span>Mis pagos</span>
+              <strong>S/ {totalPagosCliente.toFixed(2)}</strong>
+            </div>
+
+            <div>
+              <span>Atención</span>
+              <strong>MUBI</strong>
             </div>
           </div>
         </section>
 
-        <div className="stats-grid mt-4">
-          <StatCard icon="bi-bag-heart" label="Productos" value={productos.length} note="Disponibles en catálogo" />
-          <StatCard icon="bi-clipboard-check" label="Pedidos" value={pedidos.length} note="Registrados en sistema" />
-          <StatCard icon="bi-wallet2" label="Pagos" value={`S/ ${totalPagos.toFixed(2)}`} note="Pagos registrados" />
-          <StatCard icon="bi-chat-dots" label="Contacto" value="24/7" note="Atención por consulta" />
-        </div>
-
-        <section className="store-section mt-4">
-          <div className="section-heading">
-            <div>
-              <span className="eyebrow">Recomendados</span>
-              <h2>Productos destacados para ti</h2>
-            </div>
+        <section className="mubi-section client-section-soft">
+          <div className="mubi-section-title">
+            <span>Accesos rápidos</span>
+            <h2>¿Qué deseas hacer?</h2>
+            <p>Opciones simples para continuar sin perder tiempo.</p>
           </div>
 
-          <div className="product-grid">
+          <div className="client-action-grid">
+            <a href="/pedido-personalizado" className="client-action-card">
+              <i className="bi bi-plus-circle-fill"></i>
+              <h3>Hacer pedido</h3>
+              <p>Elige producto, sube diseño y envía tus especificaciones.</p>
+            </a>
+
+            <a href="/pedidos" className="client-action-card">
+              <i className="bi bi-truck"></i>
+              <h3>Mis pedidos</h3>
+              <p>Revisa el estado y avance de tus pedidos.</p>
+            </a>
+
+            <a href="/pagos" className="client-action-card">
+              <i className="bi bi-cash-coin"></i>
+              <h3>Mis pagos</h3>
+              <p>Consulta pagos registrados y saldo pendiente.</p>
+            </a>
+          </div>
+        </section>
+
+        <section className="mubi-section">
+          <div className="mubi-section-title">
+            <span>Catálogo</span>
+            <h2>Productos recomendados</h2>
+            <p>Modelos base para personalizar según tu promoción o equipo.</p>
+          </div>
+
+          <div className="mubi-product-showcase">
             {productos.slice(0, 3).map((p, index) => (
-              <article className="product-card product-card-premium" key={p.idProducto}>
-                <div className={`product-art art-${index % 4}`}>
+              <article className="mubi-product-card" key={p.idProducto}>
+                <div className={`mubi-product-img img-${index}`}>
                   <i className="bi bi-stars"></i>
                 </div>
 
-                <div className="product-body">
-                  <span className="status-pill">{p.categoria || 'MUBI'}</span>
+                <div className="mubi-product-info">
+                  <span>{p.categoria || 'MUBI'}</span>
                   <h3>{p.nombre}</h3>
-                  <p>{p.descripcion}</p>
+                  <p>{p.descripcion || 'Producto personalizable según tu idea.'}</p>
 
-                  <div className="product-footer">
+                  <div>
                     <strong>S/ {Number(p.precio || 0).toFixed(2)}</strong>
-                    <a className="btn btn-sm btn-outline-dark" href="/pedido-personalizado">
+                    <button className="btn btn-sm btn-primary" onClick={() => pedirProducto(p)}>
                       Pedir
-                    </a>
+                    </button>
                   </div>
                 </div>
               </article>
@@ -257,102 +397,283 @@ export default function Dashboard({ role, user }) {
   }
 
   return (
-    <div className="fade-in">
-      {error && (
-        <div className="alert alert-danger">
-          No se pudo conectar al backend: {error}
+  <div className="fade-in admin-dashboard-page">
+    {error && (
+      <div className="alert alert-danger">
+        No se pudo conectar al backend: {error}
+      </div>
+    )}
+
+    <section className="admin-dashboard-hero">
+      <div>
+        <span className="badge-soft">Panel del dueño</span>
+        <h1>Resumen general de MUBI</h1>
+        <p>
+          Controla pedidos, pagos, clientes, catálogo e inventario desde una sola vista.
+          Esta pantalla ayuda a tomar decisiones rápidas para la operación diaria.
+        </p>
+
+        <div className="hero-actions">
+          <a className="btn btn-primary" href="/pedidos">
+            Revisar pedidos
+          </a>
+
+          <a className="btn btn-outline-dark" href="/pagos">
+            Ver pagos
+          </a>
         </div>
-      )}
-
-      <section className="hero-card admin-hero">
-        <div>
-          <span className="badge-soft">Panel administrativo</span>
-          <h1>Controla ventas, clientes, pedidos, pagos e inventario desde un solo lugar.</h1>
-          <p>
-            Dashboard del dueño con indicadores reales consumidos desde el backend
-            ASP.NET Core y la base de datos del sistema.
-          </p>
-
-          <div className="hero-actions">
-            <a className="btn btn-primary" href="/pedidos">
-              Registrar pedido
-            </a>
-            <a className="btn btn-outline-dark" href="/productos">
-              Gestionar catálogo
-            </a>
-          </div>
-        </div>
-
-        <div className="hero-preview">
-          <i className="bi bi-graph-up-arrow"></i>
-          <h3>Resumen del negocio</h3>
-          <p>Visualiza operación, pagos y stock para tomar mejores decisiones.</p>
-        </div>
-      </section>
-
-      <div className="stats-grid">
-        <StatCard icon="bi-bag-check" label="Productos" value={productos.length} note="Catálogo activo" />
-        <StatCard icon="bi-people" label="Clientes" value={clientes.length} note="Registrados en BD" />
-        <StatCard icon="bi-cash-stack" label="Pagos" value={`S/ ${totalPagos.toFixed(2)}`} note="Ingresos registrados" />
-        <StatCard icon="bi-exclamation-triangle" label="Stock bajo" value={stockBajo} note="Alertas de inventario" />
       </div>
 
-      <div className="row g-4 mt-1">
-        <div className="col-lg-7">
-          <div className="panel-card">
+      <div className="admin-hero-mini">
+        <span>Atención de pedidos</span>
+        <strong>{porcentajePedidosAtendidos}%</strong>
+        <p>Pedidos entregados respecto al total registrado.</p>
+      </div>
+    </section>
+
+    <div className="stats-grid">
+      <StatCard
+        icon="bi-cash-stack"
+        label="Ingresos registrados"
+        value={`S/ ${totalPagos.toFixed(2)}`}
+        note="Pagos registrados en el sistema"
+      />
+
+      <StatCard
+        icon="bi-hourglass-split"
+        label="Pendientes"
+        value={pendientes}
+        note="Pedidos por revisar"
+      />
+
+      <StatCard
+        icon="bi-truck"
+        label="En proceso"
+        value={enProceso}
+        note="Pedidos en producción"
+      />
+
+      <StatCard
+        icon="bi-exclamation-triangle"
+        label="Stock bajo"
+        value={stockBajo}
+        note="Materiales que requieren atención"
+      />
+    </div>
+
+    <div className="admin-kpi-grid">
+      <article className="admin-kpi-card">
+        <span>Pedidos de hoy</span>
+        <strong>{pedidosHoy}</strong>
+        <p>Pedidos registrados durante el día.</p>
+      </article>
+
+      <article className="admin-kpi-card">
+        <span>Saldo pendiente</span>
+        <strong>S/ {ingresosPendientes.toFixed(2)}</strong>
+        <p>Dinero pendiente de pago.</p>
+      </article>
+
+      <article className="admin-kpi-card">
+        <span>Clientes registrados</span>
+        <strong>{clientes.length}</strong>
+        <p>Base actual de clientes.</p>
+      </article>
+
+      <article className="admin-kpi-card">
+        <span>Productos activos</span>
+        <strong>{productos.length}</strong>
+        <p>Catálogo disponible.</p>
+      </article>
+    </div>
+
+    <div className="admin-alert-card mt-4">
+      <div>
+        <span className="badge-soft">Notificación admin</span>
+        <h3>🔔 Tienes {pendientes} pedido(s) pendiente(s) por revisar</h3>
+        <p>
+          Revisa el diseño frontal/posterior, Excel de tallas, pagos y estado antes de iniciar producción.
+        </p>
+      </div>
+
+      <a className="btn btn-primary" href="/pedidos">
+        Ver pedidos
+      </a>
+    </div>
+
+    <div className="order-status-grid mt-4">
+      <div className="status-box">
+        <span>Pendientes</span>
+        <strong>{pendientes}</strong>
+      </div>
+
+      <div className="status-box">
+        <span>Confirmados</span>
+        <strong>{confirmados}</strong>
+      </div>
+
+      <div className="status-box">
+        <span>Pagados</span>
+        <strong>{pagados}</strong>
+      </div>
+
+      <div className="status-box">
+        <span>En proceso</span>
+        <strong>{enProceso}</strong>
+      </div>
+
+      <div className="status-box">
+        <span>Entregados</span>
+        <strong>{entregados}</strong>
+      </div>
+    </div>
+
+    <div className="row g-4 mt-1">
+      <div className="col-lg-7">
+        <div className="panel-card">
+          <div className="section-actions">
             <h4>Últimos pedidos</h4>
+            <a className="btn btn-sm btn-outline-dark" href="/pedidos">
+              Ver todos
+            </a>
+          </div>
 
-            <div className="table-responsive">
-              <table className="table align-middle">
-                <thead>
-                  <tr>
-                    <th>Cliente</th>
-                    <th>Estado</th>
-                    <th>Total</th>
-                    <th>Saldo</th>
+          <div className="table-responsive">
+            <table className="table align-middle">
+              <thead>
+                <tr>
+                  <th>Cliente</th>
+                  <th>Estado</th>
+                  <th>Total</th>
+                  <th>Saldo</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                {pedidos.slice(0, 5).map((p) => (
+                  <tr key={p.idPedido}>
+                    <td>{p.cliente || `Cliente #${p.idCliente}`}</td>
+                    <td>
+                      <span className="status-pill">{p.estadoPedido}</span>
+                    </td>
+                    <td>S/ {Number(p.montoTotal || 0).toFixed(2)}</td>
+                    <td>S/ {Number(p.saldoPendiente || 0).toFixed(2)}</td>
                   </tr>
-                </thead>
+                ))}
 
-                <tbody>
-                  {pedidos.slice(0, 5).map((p) => (
-                    <tr key={p.idPedido}>
-                      <td>{p.cliente || `Cliente #${p.idCliente}`}</td>
-                      <td>
-                        <span className="status-pill">{p.estadoPedido}</span>
-                      </td>
-                      <td>S/ {Number(p.montoTotal || 0).toFixed(2)}</td>
-                      <td>S/ {Number(p.saldoPendiente || 0).toFixed(2)}</td>
-                    </tr>
-                  ))}
-
-                  {!pedidos.length && (
-                    <tr>
-                      <td colSpan="4">No hay pedidos registrados.</td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
+                {!pedidos.length && (
+                  <tr>
+                    <td colSpan="4">No hay pedidos registrados.</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
           </div>
         </div>
+      </div>
 
-        <div className="col-lg-5">
-          <div className="panel-card accent-panel">
-            <h4>Prioridad de hoy</h4>
-            <p>
-              Tienes {pendientes} pedido(s) pendiente(s). Revisa pagos e inventario
-              antes de confirmar producción.
-            </p>
+      <div className="col-lg-5">
+        <div className="panel-card admin-priority-card">
+          <span className="badge-soft">Prioridad de hoy</span>
+          <h4>Qué debe revisar el dueño</h4>
 
-            <ul className="check-list">
-              <li>Catálogo conectado al backend</li>
-              <li>CRUD de clientes y productos</li>
-              <li>Registro de pedidos y pagos</li>
-              <li>Alertas de stock bajo</li>
-            </ul>
+          <ul className="check-list">
+            <li>{pendientes} pedido(s) pendientes por confirmar</li>
+            <li>S/ {ingresosPendientes.toFixed(2)} en saldo pendiente</li>
+            <li>{stockBajo} material(es) con stock bajo</li>
+            <li>Diseños y Excel adjuntos listos para producción</li>
+          </ul>
+
+          {ultimoPedido && (
+            <div className="last-order-box">
+              <span>Último pedido registrado</span>
+              <strong>#{ultimoPedido.idPedido}</strong>
+              <p>{ultimoPedido.cliente || `Cliente #${ultimoPedido.idCliente}`}</p>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+
+    <div className="row g-4 mt-1">
+      <div className="col-lg-6">
+        <div className="panel-card">
+          <div className="section-actions">
+            <h4>Últimos pagos</h4>
+            <a className="btn btn-sm btn-outline-dark" href="/pagos">
+              Ver pagos
+            </a>
+          </div>
+
+          <div className="admin-payment-list">
+            {ultimosPagos.map((p) => (
+              <div className="admin-payment-item" key={p.idPago}>
+                <div>
+                  <strong>S/ {Number(p.monto || 0).toFixed(2)}</strong>
+                  <span>{p.metodoPago || 'Método no definido'} · {p.tipoPago || 'Pago'}</span>
+                </div>
+
+                <small>Pedido #{p.idPedido}</small>
+              </div>
+            ))}
+
+            {!ultimosPagos.length && (
+              <p className="text-muted mb-0">No hay pagos registrados.</p>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <div className="col-lg-6">
+        <div className="panel-card">
+          <div className="section-actions">
+            <h4>Materiales con stock bajo</h4>
+            <a className="btn btn-sm btn-outline-dark" href="/materiales">
+              Ver inventario
+            </a>
+          </div>
+
+          <div className="admin-stock-list">
+            {materialesBajos.slice(0, 5).map((m) => (
+              <div className="admin-stock-item" key={m.idMaterial}>
+                <div>
+                  <strong>{m.nombreMaterial || m.nombre || `Material #${m.idMaterial}`}</strong>
+                  <span>Stock actual: {m.stockActual} / mínimo: {m.stockMinimo}</span>
+                </div>
+
+                <i className="bi bi-exclamation-triangle"></i>
+              </div>
+            ))}
+
+            {!materialesBajos.length && (
+              <p className="text-muted mb-0">No hay materiales con stock bajo.</p>
+            )}
           </div>
         </div>
       </div>
     </div>
-  );
+
+    <div className="admin-shortcuts mt-4">
+      <a href="/pedidos">
+        <i className="bi bi-clipboard-check"></i>
+        <span>Pedidos</span>
+      </a>
+
+      <a href="/pagos">
+        <i className="bi bi-cash-coin"></i>
+        <span>Pagos</span>
+      </a>
+
+      <a href="/productos">
+        <i className="bi bi-bag-heart"></i>
+        <span>Productos</span>
+      </a>
+
+      <a href="/materiales">
+        <i className="bi bi-box-seam"></i>
+        <span>Inventario</span>
+      </a>
+    </div>
+  </div>
+);
 }

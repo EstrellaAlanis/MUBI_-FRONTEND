@@ -15,12 +15,18 @@ import Usuarios from './pages/Usuarios.jsx';
 
 function RequireAdmin({ user, children }) {
   if (user?.role === 'admin') return children;
+
   return (
     <div className="panel-card no-access-card fade-in">
       <span className="badge-soft">Acceso restringido</span>
       <h2>Solo el administrador puede ingresar a este módulo</h2>
-      <p>Esta sección forma parte del panel del dueño: usuarios, clientes, inventario, reportes y mantenimiento general.</p>
-      <a className="btn btn-primary" href="/login">Iniciar sesión como administrador</a>
+      <p>
+        Esta sección forma parte del panel del dueño: usuarios, clientes,
+        inventario, reportes y mantenimiento general.
+      </p>
+      <a className="btn btn-primary" href="/login">
+        Iniciar sesión como administrador
+      </a>
     </div>
   );
 }
@@ -32,7 +38,8 @@ export default function App() {
   });
 
   const role = user?.role || 'cliente';
-  const isPublicVisitor = !user && role === 'cliente';
+  const isAdmin = user?.role === 'admin';
+  const isClientView = role === 'cliente';
 
   const handleLogin = (loggedUser) => {
     setUser(loggedUser);
@@ -49,8 +56,12 @@ export default function App() {
   }, [user]);
 
   return (
-    <div className={`app-shell ${role === 'cliente' ? 'client-mode' : 'admin-mode'} ${isPublicVisitor ? 'public-mode' : ''}`}>
-      {!isPublicVisitor && <Sidebar role={role} user={user} />}
+    <div
+      className={`app-shell ${
+        isAdmin ? 'admin-mode' : 'client-mode website-mode'
+      } ${!user ? 'public-mode' : ''}`}
+    >
+      {isAdmin && <Sidebar role={role} user={user} />}
 
       <main className="main-content">
         <Topbar role={role} user={user} onLogout={handleLogout} />
@@ -58,16 +69,56 @@ export default function App() {
         <section className="content-area">
           <Routes>
             <Route path="/" element={<Dashboard role={role} user={user} />} />
-            <Route path="/login" element={ user? <Navigate to="/" replace />: <Login onLogin={handleLogin} />}/> // agregado para redirigir a dashboard si ya está logueado
+
+            <Route
+              path="/login"
+              element={user ? <Navigate to="/" replace /> : <Login onLogin={handleLogin} />}
+            />
+
             <Route path="/productos" element={<Productos role={role} user={user} />} />
-            <Route path="/clientes" element={<RequireAdmin user={user}><Clientes /></RequireAdmin>} />
-            <Route path="/usuarios" element={<RequireAdmin user={user}><Usuarios /></RequireAdmin>} />
-            <Route path="/pedidos" element={<Pedidos role={role} />} />
+
+            <Route
+              path="/clientes"
+              element={
+                <RequireAdmin user={user}>
+                  <Clientes />
+                </RequireAdmin>
+              }
+            />
+
+            <Route
+              path="/usuarios"
+              element={
+                <RequireAdmin user={user}>
+                  <Usuarios />
+                </RequireAdmin>
+              }
+            />
+
+            <Route path="/pedidos" element={<Pedidos role={role} user={user} />} />
             <Route path="/pedido-personalizado" element={<Pedidos role={role} user={user} />} />
-            <Route path="/pagos" element={<Pagos role={role} />} />
-            <Route path="/materiales" element={<RequireAdmin user={user}><Materiales /></RequireAdmin>} />
-            <Route path="/contacto" element={<Contacto role={role} />} />
-            <Route path="/reportes" element={<RequireAdmin user={user}><Reportes /></RequireAdmin>} />
+            <Route path="/pagos" element={<Pagos role={role} user={user} />} />
+
+            <Route
+              path="/materiales"
+              element={
+                <RequireAdmin user={user}>
+                  <Materiales />
+                </RequireAdmin>
+              }
+            />
+
+            <Route path="/contacto" element={<Contacto role={role} user={user} />} />
+
+            <Route
+              path="/reportes"
+              element={
+                <RequireAdmin user={user}>
+                  <Reportes />
+                </RequireAdmin>
+              }
+            />
+
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </section>

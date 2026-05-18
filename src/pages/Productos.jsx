@@ -2,12 +2,15 @@ import { useEffect, useMemo, useState } from 'react';
 import PageHeader from '../components/PageHeader.jsx';
 import { api, endpoints } from '../services/api.js';
 
+const API_BASE_URL = 'http://localhost:5071';
+
 const emptyForm = {
   nombre: '',
   descripcion: '',
   precio: '',
   disponibilidad: 'disponible',
-  idCategoria: ''
+  idCategoria: '',
+  rutaImagenPrincipal: ''
 };
 
 export default function Productos({ role, user }) {
@@ -20,14 +23,17 @@ export default function Productos({ role, user }) {
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
 
+  const [archivoImagen, setArchivoImagen] = useState(null);
+  const [previewImagen, setPreviewImagen] = useState('');
+
   const load = async () => {
     const [productosData, categoriasData] = await Promise.all([
       api.get(endpoints.productos),
       api.get(endpoints.categorias)
     ]);
 
-    setProductos(productosData);
-    setCategorias(categoriasData);
+    setProductos(Array.isArray(productosData) ? productosData : []);
+    setCategorias(Array.isArray(categoriasData) ? categoriasData : []);
 
     if (!form.idCategoria && categoriasData[0]) {
       setForm((prev) => ({ ...prev, idCategoria: categoriasData[0].idCategoria }));
@@ -47,19 +53,46 @@ export default function Productos({ role, user }) {
     });
   }, [productos, search, filter]);
 
+  const handleImagen = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const extension = file.name.split('.').pop().toLowerCase();
+
+    if (!['jpg', 'jpeg', 'png', 'webp'].includes(extension)) {
+      setError('Solo se permiten imágenes JPG, PNG o WEBP.');
+      e.target.value = '';
+      return;
+    }
+
+    setError('');
+    setArchivoImagen(file);
+    setPreviewImagen(URL.createObjectURL(file));
+  };
+
+  const subirImagenProducto = async () => {
+    if (!archivoImagen) return form.rutaImagenPrincipal || '';
+
+    const uploaded = await api.upload(`${endpoints.productos}/upload-imagen`, archivoImagen);
+    return uploaded.ruta || '';
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     setMessage('');
 
-    const payload = {
-      ...form,
-      precio: Number(form.precio),
-      idCategoria: Number(form.idCategoria),
-      disponibilidad: form.disponibilidad.toLowerCase()
-    };
-
     try {
+      const rutaImagenPrincipal = await subirImagenProducto();
+
+      const payload = {
+        ...form,
+        precio: Number(form.precio),
+        idCategoria: Number(form.idCategoria),
+        disponibilidad: form.disponibilidad.toLowerCase(),
+        rutaImagenPrincipal
+      };
+
       if (editingId) {
         await api.put(`${endpoints.productos}/${editingId}`, payload);
       } else {
@@ -69,6 +102,8 @@ export default function Productos({ role, user }) {
       setMessage(editingId ? 'Producto actualizado correctamente.' : 'Producto registrado correctamente.');
       setForm({ ...emptyForm, idCategoria: categorias[0]?.idCategoria || '' });
       setEditingId(null);
+      setArchivoImagen(null);
+      setPreviewImagen('');
       await load();
     } catch (err) {
       setError(err.message);
@@ -82,10 +117,21 @@ export default function Productos({ role, user }) {
       descripcion: p.descripcion || '',
       precio: p.precio || '',
       disponibilidad: p.disponibilidad || 'disponible',
-      idCategoria: p.idCategoria || ''
+      idCategoria: p.idCategoria || '',
+      rutaImagenPrincipal: p.rutaImagenPrincipal || ''
     });
 
+    setArchivoImagen(null);
+    setPreviewImagen(p.rutaImagenPrincipal ? `${API_BASE_URL}${p.rutaImagenPrincipal}` : '');
+
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setForm({ ...emptyForm, idCategoria: categorias[0]?.idCategoria || '' });
+    setArchivoImagen(null);
+    setPreviewImagen('');
   };
 
   const remove = async (id) => {
@@ -106,8 +152,11 @@ export default function Productos({ role, user }) {
       `Deseo pedir el producto "${p.nombre}" de la categoría ${p.categoria || 'MUBI'}.`
     );
 
-    // window.location.href = user ? '/pedidos' : '/login';
     window.location.href = user ? '/pedido-personalizado' : '/login';
+  };
+
+  const imagenProducto = (p) => {
+    return p.rutaImagenPrincipal ? `${API_BASE_URL}${p.rutaImagenPrincipal}` : '';
   };
 
   return (
@@ -136,7 +185,7 @@ export default function Productos({ role, user }) {
             </p>
           </div>
 
-          <a href="/pedidos" className="btn btn-primary">
+          <a href="/pedido-personalizado" className="btn btn-primary">
             <i className="bi bi-clipboard-plus"></i> Realizar pedido
           </a>
         </section>
@@ -199,6 +248,23 @@ export default function Productos({ role, user }) {
             </div>
           </div>
 
+          <label>Imagen del producto</label>
+          <input
+            className="form-control"
+            type="file"
+            accept="image/*"
+            onChange={handleImagen}
+          />
+
+          {previewImagen && (
+            <div className="product-image-preview mt-3">
+              <img src={previewImagen} alt="Vista previa del producto" />
+              <small>
+                {archivoImagen ? archivoImagen.name : 'Imagen actual del producto'}
+              </small>
+            </div>
+          )}
+
           <label>Descripción</label>
           <textarea
             className="form-control"
@@ -216,10 +282,7 @@ export default function Productos({ role, user }) {
               <button
                 className="btn btn-outline-dark"
                 type="button"
-                onClick={() => {
-                  setEditingId(null);
-                  setForm(emptyForm);
-                }}
+                onClick={cancelEdit}
               >
                 Cancelar
               </button>
@@ -228,13 +291,16 @@ export default function Productos({ role, user }) {
         </form>
       )}
 
-      {/* <div className="filter-bar mt-4">
-        <input
-          className="form-control"
-          placeholder="Buscar producto, diseño o categoría..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
+      <div className="search-access-box mt-4">
+        <div className="search-main">
+          <i className="bi bi-search"></i>
+          <input
+            className="form-control"
+            placeholder="Buscar polos, anime, escolares, deportivos..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
 
         <select
           className="form-select"
@@ -248,86 +314,70 @@ export default function Productos({ role, user }) {
             </option>
           ))}
         </select>
-      </div> */}
-      <div className="search-access-box mt-4">
-  <div className="search-main">
-    <i className="bi bi-search"></i>
-    <input
-      className="form-control"
-      placeholder="Buscar polos, anime, escolares, deportivos..."
-      value={search}
-      onChange={(e) => setSearch(e.target.value)}
-    />
-  </div>
 
-  <select
-    className="form-select"
-    value={filter}
-    onChange={(e) => setFilter(e.target.value)}
-  >
-    <option value="">Todas las categorías</option>
-    {categorias.map((c) => (
-      <option key={c.idCategoria} value={c.idCategoria}>
-        {c.nombreCategoria}
-      </option>
-    ))}
-  </select>
-
-  {search && (
-    <div className="search-suggestions">
-      {filtered.slice(0, 5).map((p) => (
-        <button
-          key={p.idProducto}
-          type="button"
-          onClick={() => setSearch(p.nombre)}
-        >
-          <i className="bi bi-bag-heart"></i>
-          <span>{p.nombre}</span>
-          <small>{p.categoria || 'MUBI'}</small>
-        </button>
-      ))}
-    </div>
-  )}
-</div>
-
+        {search && (
+          <div className="search-suggestions">
+            {filtered.slice(0, 5).map((p) => (
+              <button
+                key={p.idProducto}
+                type="button"
+                onClick={() => setSearch(p.nombre)}
+              >
+                <i className="bi bi-bag-heart"></i>
+                <span>{p.nombre}</span>
+                <small>{p.categoria || 'MUBI'}</small>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
 
       <div className="product-grid">
-        {filtered.map((p, index) => (
-          <article className="product-card product-card-premium" key={p.idProducto}>
-            <div className={`product-art art-${index % 4}`}>
-              <i className="bi bi-bag-heart"></i>
-            </div>
+        {filtered.map((p, index) => {
+          const img = imagenProducto(p);
 
-            <div className="product-body">
-              <div className="product-tags">
-                <span className="status-pill">{p.disponibilidad}</span>
-                <span className="category-pill">{p.categoria || 'MUBI'}</span>
-              </div>
-
-              <h3>{p.nombre}</h3>
-              <p>{p.descripcion || 'Producto personalizable según el diseño del cliente.'}</p>
-
-              <div className="product-footer">
-                <strong>S/ {Number(p.precio || 0).toFixed(2)}</strong>
-
-                {role === 'admin' ? (
-                  <div className="table-actions">
-                    <button className="btn btn-sm btn-outline-dark" onClick={() => edit(p)}>
-                      Editar
-                    </button>
-                    <button className="btn btn-sm btn-outline-danger" onClick={() => remove(p.idProducto)}>
-                      Eliminar
-                    </button>
-                  </div>
+          return (
+            <article className="product-card product-card-premium" key={p.idProducto}>
+              <div className={`product-art product-art-real art-${index % 4}`}>
+                {img ? (
+                  <img src={img} alt={p.nombre} />
                 ) : (
-                  <button className="btn btn-sm btn-primary" onClick={() => pedirProducto(p)}>
-                    Personalizar pedido
-                  </button>
+                  <i className="bi bi-bag-heart"></i>
                 )}
               </div>
-            </div>
-          </article>
-        ))}
+
+              <div className="product-body">
+                <div className="product-tags">
+                  <span className="status-pill">{p.disponibilidad}</span>
+                  <span className="category-pill">{p.categoria || 'MUBI'}</span>
+                </div>
+
+                <h3>{p.nombre}</h3>
+                <p>{p.descripcion || 'Producto personalizable según el diseño del cliente.'}</p>
+
+                <div className="product-footer">
+                  <strong>S/ {Number(p.precio || 0).toFixed(2)}</strong>
+
+                  {role === 'admin' ? (
+                    <div className="table-actions">
+                      <button className="btn btn-sm btn-outline-dark" onClick={() => edit(p)}>
+                        Editar
+                      </button>
+
+                      <button className="btn btn-sm btn-outline-danger" onClick={() => remove(p.idProducto)}>
+                        Eliminar
+                      </button>
+                    </div>
+                  ) : (
+                    <button className="btn btn-sm btn-primary" onClick={() => pedirProducto(p)}>
+                      Personalizar pedido
+                    </button>
+                  )}
+                </div>
+              </div>
+            </article>
+          );
+        })}
 
         {!filtered.length && (
           <div className="panel-card empty-state">

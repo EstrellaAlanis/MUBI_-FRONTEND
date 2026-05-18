@@ -1,9 +1,34 @@
 import { useState } from 'react';
 import { api, endpoints } from '../services/api.js';
 import { useNavigate, Link } from 'react-router-dom';
+import { signInWithPopup } from 'firebase/auth';
+import { auth, googleProvider } from '../services/firebase.js';
 
 export default function Login({ onLogin }) {
   const navigate = useNavigate();
+  const loginGoogle = async () => {
+  try {
+    setError('');
+    setMessage('');
+
+    const result = await signInWithPopup(auth, googleProvider);
+    const googleUser = result.user;
+
+    setRegistro(prev => ({
+      ...prev,
+      nombres: googleUser.displayName?.split(' ')[0] || '',
+      apellidos: googleUser.displayName?.split(' ').slice(1).join(' ') || '',
+      correo: googleUser.email || '',
+      contrasena: 'Google123*'
+    }));
+
+    setModo('registro');
+    setMessage('Gmail validado correctamente. Ahora completa tu DNI, teléfono y dirección para crear tu cuenta en MUBI.');
+  } catch (err) {
+    console.error(err);
+    setError('No se pudo iniciar sesión con Google.');
+  }
+};
   const [modo, setModo] = useState('login');
   const [correo, setCorreo] = useState('admin@mubi.com');
   const [contrasena, setContrasena] = useState('Admin123*');
@@ -73,6 +98,34 @@ export default function Login({ onLogin }) {
       setError('No se pudo registrar el cliente. Verifica los datos o revisa si el correo ya existe.');
     }
   };
+  const consultarDni = async () => {
+  setError('');
+  setMessage('');
+
+  try {
+    if (!registro.documentoIdentidad || registro.documentoIdentidad.length !== 8) {
+      setError('Ingresa un DNI válido de 8 dígitos.');
+      return;
+    }
+
+    const data = await api.get(`${endpoints.clientes}/consultar-dni/${registro.documentoIdentidad}`);
+
+    if (!data.encontrado) {
+      setError('No se encontraron datos para ese DNI.');
+      return;
+    }
+
+    setRegistro(prev => ({
+      ...prev,
+      nombres: data.nombres || prev.nombres,
+      apellidos: data.apellidos || prev.apellidos
+    }));
+
+    setMessage('Datos del DNI cargados correctamente.');
+  } catch (err) {
+    setError('No se pudo consultar el DNI.');
+  }
+};
 
   const loginDemo = (role) => {
     const session = role === 'admin'
@@ -176,7 +229,7 @@ export default function Login({ onLogin }) {
                 <i className="bi bi-box-arrow-in-right"></i> Acceder
               </button>
 
-              <button className="btn btn-google w-100 mt-3" type="button" onClick={loginGoogleDemo}>
+              <button className="btn btn-google w-100 mt-3" type="button" onClick={loginGoogle}>
                 <i className="bi bi-google"></i> Continuar con Gmail
               </button>
             </form>
@@ -225,11 +278,24 @@ export default function Login({ onLogin }) {
 
                 <div>
                   <label>DNI</label>
-                  <input
-                    className="form-control"
-                    value={registro.documentoIdentidad}
-                    onChange={e => setRegistro({ ...registro, documentoIdentidad: e.target.value })}
-                  />
+                  <div className="input-action">
+                    <input
+                      className="form-control"
+                      value={registro.documentoIdentidad}
+                      maxLength="8"
+                      onChange={e => setRegistro({
+                        ...registro,
+                        documentoIdentidad: e.target.value.replace(/\D/g, '')
+                      })}
+                    />
+                    <button
+                      className="btn btn-outline-dark"
+                      type="button"
+                      onClick={consultarDni}
+                    >
+                      Buscar
+                    </button>
+                  </div>
                 </div>
               </div>
 

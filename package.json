@@ -10,12 +10,12 @@
   },
   "dependencies": {
     "@vitejs/plugin-react": "latest",
-    "vite": "latest",
+    "bootstrap": "latest",
+    "bootstrap-icons": "latest",
+    "firebase": "^12.13.0",
     "react": "latest",
     "react-dom": "latest",
     "react-router-dom": "latest",
-    "bootstrap": "latest",
-    "bootstrap-icons": "latest"
-  },
-  "devDependencies": {}
+    "vite": "latest"
+  }
 }
