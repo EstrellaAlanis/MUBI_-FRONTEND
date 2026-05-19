@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import * as XLSX from 'xlsx';
 import PageHeader from '../components/PageHeader.jsx';
 import { api, endpoints } from '../services/api.js';
 
@@ -28,6 +29,7 @@ export default function Pedidos({ role, user }) {
   const [pedidos, setPedidos] = useState([]);
   const [clientes, setClientes] = useState([]);
   const [productos, setProductos] = useState([]);
+  const [comprobantes, setComprobantes] = useState([]);
   const [form, setForm] = useState(emptyForm);
 
   const [previewFrente, setPreviewFrente] = useState('');
@@ -36,21 +38,26 @@ export default function Pedidos({ role, user }) {
   const [archivoFrente, setArchivoFrente] = useState(null);
   const [archivoEspalda, setArchivoEspalda] = useState(null);
   const [archivoExcel, setArchivoExcel] = useState(null);
+  const [excelPreview, setExcelPreview] = useState([]);
+const [excelConfirmado, setExcelConfirmado] = useState(false);
 
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [pedidoSeleccionado, setPedidoSeleccionado] = useState(null);
+  const [checkoutPendiente, setCheckoutPendiente] = useState([]);
 
   const load = async () => {
-    const [pedidosData, clientesData, productosData] = await Promise.all([
+    const [pedidosData, clientesData, productosData, comprobantesData] = await Promise.all([
       api.get(endpoints.pedidos),
       api.get(endpoints.clientes),
-      api.get(endpoints.productos)
+      api.get(endpoints.productos),
+      api.get(endpoints.comprobantes)
     ]);
 
     setPedidos(Array.isArray(pedidosData) ? pedidosData : []);
     setClientes(Array.isArray(clientesData) ? clientesData : []);
     setProductos(Array.isArray(productosData) ? productosData : []);
+    setComprobantes(Array.isArray(comprobantesData) ? comprobantesData : []);
 
     setForm(prev => ({
       ...prev,
@@ -59,25 +66,71 @@ export default function Pedidos({ role, user }) {
     }));
   };
 
+  const crearResumenCheckout = (items) => {
+  if (!Array.isArray(items) || !items.length) return '';
+
+  return items.map((item, index) => {
+    const personalizados = Array.isArray(item.personalizados)
+      ? item.personalizados
+          .filter(row => row.talla || row.nombre || row.numero)
+          .map(row => `${row.talla || '-'} / ${row.nombre || 'Sin nombre'} / #${row.numero || '-'}`)
+          .join(' | ')
+      : 'Sin nombres o números personalizados';
+
+    return `Producto ${index + 1}: ${item.cantidad} x ${item.nombre}. Talla base: ${item.talla}. Color: ${item.color}. Personalización: ${personalizados}.`;
+  }).join('\n');
+};
+
   useEffect(() => {
-    const ideaGuardada = localStorage.getItem('ideaPedidoMubi');
+  const ideaGuardada = localStorage.getItem('ideaPedidoMubi');
+  const checkoutGuardado = localStorage.getItem('mubiCheckoutPendiente');
 
-    if (ideaGuardada) {
-      setForm(prev => ({
-        ...prev,
-        descripcionDiseno: ideaGuardada
-      }));
-    }
+  let checkoutItems = [];
 
-    load().catch(err => setError(err.message));
-  }, []);
+  try {
+    checkoutItems = checkoutGuardado ? JSON.parse(checkoutGuardado) : [];
+  } catch {
+    checkoutItems = [];
+  }
+
+  if (checkoutItems.length) {
+    setCheckoutPendiente(checkoutItems);
+
+    const primerItem = checkoutItems[0];
+    const totalCantidad = checkoutItems.reduce(
+      (acc, item) => acc + Number(item.cantidad || 1),
+      0
+    );
+
+    setForm(prev => ({
+      ...prev,
+      idProducto: primerItem.idProducto || prev.idProducto,
+      talla: primerItem.talla || prev.talla,
+      color: primerItem.color || prev.color,
+      cantidad: totalCantidad,
+      descripcionDiseno: crearResumenCheckout(checkoutItems)
+    }));
+  } else if (ideaGuardada) {
+    setForm(prev => ({
+      ...prev,
+      descripcionDiseno: ideaGuardada
+    }));
+  }
+
+  load().catch(err => setError(err.message));
+}, []);
 
   const selectedProduct = productos.find(
     p => Number(p.idProducto) === Number(form.idProducto)
   );
+  const checkoutTotal = checkoutPendiente.reduce(
+  (acc, item) => acc + Number(item.precio || 0) * Number(item.cantidad || 1),
+  0
+);
 
-  const total = Number(selectedProduct?.precio || 0) * Number(form.cantidad || 0);
-
+  const total = checkoutPendiente.length
+    ? checkoutTotal
+    : Number(selectedProduct?.precio || 0) * Number(form.cantidad || 0);
   const pedidosPendientes = pedidos.filter(
     p => String(p.estadoPedido).toLowerCase() === 'pendiente'
   ).length;
@@ -107,23 +160,73 @@ export default function Pedidos({ role, user }) {
       setPreviewEspalda(URL.createObjectURL(file));
     }
   };
+const descargarPlantillaExcel = () => {
+  const data = [
+    { Talla: 'M', Nombre: 'AXEL', Numero: '10' },
+    { Talla: 'L', Nombre: 'MIGUEL', Numero: '7' },
+    { Talla: 'S', Nombre: 'ANGEL', Numero: '11' }
+  ];
 
+  const worksheet = XLSX.utils.json_to_sheet(data);
+  const workbook = XLSX.utils.book_new();
+
+  XLSX.utils.book_append_sheet(workbook, worksheet, 'Tallas');
+
+  XLSX.writeFile(workbook, 'plantilla_tallas_mubi.xlsx');
+};
   const handleExcel = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
+  const file = e.target.files[0];
+  if (!file) return;
 
-    const extension = file.name.split('.').pop().toLowerCase();
+  const extension = file.name.split('.').pop().toLowerCase();
 
-    if (!['xlsx', 'xls'].includes(extension)) {
-      setError('Solo se permite subir archivos Excel .xlsx o .xls.');
-      e.target.value = '';
-      return;
+  if (!['xlsx', 'xls'].includes(extension)) {
+    setError('Solo se permite subir archivos Excel .xlsx o .xls.');
+    e.target.value = '';
+    return;
+  }
+
+  setError('');
+  setArchivoExcel(file);
+  setExcelConfirmado(false);
+  setForm({ ...form, archivoExcelTallas: file.name });
+
+  const reader = new FileReader();
+
+  reader.onload = (event) => {
+    try {
+      const data = new Uint8Array(event.target.result);
+      const workbook = XLSX.read(data, { type: 'array' });
+      const sheetName = workbook.SheetNames[0];
+      const worksheet = workbook.Sheets[sheetName];
+
+      const rows = XLSX.utils.sheet_to_json(worksheet, {
+        defval: ''
+      });
+
+      const normalizedRows = rows.map((row, index) => ({
+        id: index + 1,
+        talla: row.Talla || row.talla || row.TALLA || '',
+        nombre: row.Nombre || row.nombre || row.NOMBRE || '',
+        numero: row.Numero || row.Número || row.numero || row.NUMERO || row.NÚMERO || ''
+      }));
+
+      setExcelPreview(normalizedRows);
+    } catch {
+      setError('No se pudo leer el Excel. Verifica que tenga columnas Talla, Nombre y Numero.');
+      setExcelPreview([]);
+      setExcelConfirmado(false);
     }
-
-    setError('');
-    setArchivoExcel(file);
-    setForm({ ...form, archivoExcelTallas: file.name });
   };
+
+  reader.readAsArrayBuffer(file);
+};
+const limpiarExcel = () => {
+  setArchivoExcel(null);
+  setExcelPreview([]);
+  setExcelConfirmado(false);
+  setForm({ ...form, archivoExcelTallas: '' });
+};
 
   const subirImagen = async (archivo) => {
     if (!archivo) return '';
@@ -145,6 +248,9 @@ export default function Pedidos({ role, user }) {
     setMessage('');
 
     try {
+      if (archivoExcel && excelPreview.length > 0 && !excelConfirmado) {
+        throw new Error('Primero confirma la vista previa del Excel antes de enviar el pedido.');
+      }
       if (isCliente && !clienteActual) {
         throw new Error('No se encontró tu registro de cliente. Verifica que tu correo esté registrado como cliente.');
       }
@@ -164,19 +270,36 @@ export default function Pedidos({ role, user }) {
         estadoPedido: 'pendiente',
         observaciones: form.descripcionDiseno,
         rutaExcelTallas: rutaExcelTallas,
-        detalles: [
-          {
-            idProducto: Number(form.idProducto),
-            talla: form.talla,
-            color: form.color,
-            cantidad: Number(form.cantidad),
-            precioUnitario: Number(selectedProduct?.precio || 0),
-            descripcionDiseno: `Tipo: ${form.tipoDiseno}. Ubicación: ${form.ubicacionDiseno}. Detalle: ${form.descripcionDiseno}. Archivos: ${archivos || 'Sin archivos adjuntos'}`,
-            disenoPersonalizado: archivos || (form.descripcionDiseno ? 'Diseño descrito por cliente' : 'Sin diseño'),
-            rutaDisenoFrontal: rutaFrente,
-            rutaDisenoPosterior: rutaEspalda
-          }
-        ]
+        detalles: checkoutPendiente.length
+          ? checkoutPendiente.map(item => ({
+              idProducto: Number(item.idProducto),
+              talla: item.talla || 'M',
+              color: item.color || 'Negro',
+              cantidad: Number(item.cantidad || 1),
+              precioUnitario: Number(item.precio || 0),
+              descripcionDiseno: `Tipo: ${form.tipoDiseno}. Ubicación: ${form.ubicacionDiseno}. Detalle: ${form.descripcionDiseno}. Archivos: ${archivos || 'Sin archivos adjuntos'}`,
+              disenoPersonalizado: item.personalizados?.length
+                ? item.personalizados
+                    .filter(row => row.talla || row.nombre || row.numero)
+                    .map(row => `${row.talla || '-'} / ${row.nombre || 'Sin nombre'} / #${row.numero || '-'}`)
+                    .join(' | ')
+                : (archivos || 'Diseño descrito por cliente'),
+              rutaDisenoFrontal: rutaFrente,
+              rutaDisenoPosterior: rutaEspalda
+            }))
+          : [
+              {
+                idProducto: Number(form.idProducto),
+                talla: form.talla,
+                color: form.color,
+                cantidad: Number(form.cantidad),
+                precioUnitario: Number(selectedProduct?.precio || 0),
+                descripcionDiseno: `Tipo: ${form.tipoDiseno}. Ubicación: ${form.ubicacionDiseno}. Detalle: ${form.descripcionDiseno}. Archivos: ${archivos || 'Sin archivos adjuntos'}`,
+                disenoPersonalizado: archivos || (form.descripcionDiseno ? 'Diseño descrito por cliente' : 'Sin diseño'),
+                rutaDisenoFrontal: rutaFrente,
+                rutaDisenoPosterior: rutaEspalda
+              }
+            ]
       };
 
       await api.post(endpoints.pedidos, payload);
@@ -193,8 +316,14 @@ export default function Pedidos({ role, user }) {
       setArchivoFrente(null);
       setArchivoEspalda(null);
       setArchivoExcel(null);
+      setExcelPreview([]);
+      setExcelConfirmado(false);
 
       localStorage.removeItem('ideaPedidoMubi');
+      localStorage.removeItem('mubiCart');
+      localStorage.removeItem('mubiCheckoutPendiente');
+      window.dispatchEvent(new Event('mubi-cart-updated'));
+      setCheckoutPendiente([]);
       await load();
 
       if (isCliente) {
@@ -232,7 +361,96 @@ export default function Pedidos({ role, user }) {
       setError(err.message);
     }
   };
+const getComprobantePedido = (idPedido) => {
+  return comprobantes.find(c =>
+    Number(c.idPedido) === Number(idPedido) &&
+    String(c.estado || '').toLowerCase() === 'emitido'
+  );
+};
 
+const imprimirComprobante = (comprobante) => {
+  if (!comprobante) return;
+
+  const clienteNombre = comprobante.razonSocial || comprobante.cliente || 'Cliente';
+  const documento = comprobante.ruc || comprobante.documentoIdentidad || 'Sin documento';
+
+  const html = `
+    <html>
+      <head>
+        <title>${comprobante.numeroCompleto}</title>
+        <style>
+          body { font-family: Arial, sans-serif; padding: 32px; color: #111; }
+          .ticket { max-width: 760px; margin: auto; border: 1px solid #ddd; padding: 28px; border-radius: 16px; }
+          .top { display: flex; justify-content: space-between; gap: 20px; border-bottom: 2px solid #111; padding-bottom: 16px; margin-bottom: 20px; }
+          h1, h2, h3, p { margin: 0; }
+          .brand h1 { font-size: 34px; }
+          .box { border: 1px solid #111; border-radius: 12px; padding: 14px; text-align: center; min-width: 220px; }
+          .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 18px 0; }
+          .field { background: #f5f5f5; padding: 12px; border-radius: 10px; }
+          table { width: 100%; border-collapse: collapse; margin-top: 18px; }
+          th, td { border-bottom: 1px solid #ddd; padding: 12px; text-align: left; }
+          .totals { margin-top: 20px; margin-left: auto; width: 280px; }
+          .totals div { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #ddd; }
+          .total { font-weight: bold; font-size: 20px; }
+          .footer { margin-top: 24px; font-size: 13px; color: #555; text-align: center; }
+        </style>
+      </head>
+      <body>
+        <div class="ticket">
+          <div class="top">
+            <div class="brand">
+              <h1>MUBI</h1>
+              <p>Polos sublimados y personalizados</p>
+              <p>Pucallpa - Perú</p>
+            </div>
+            <div class="box">
+              <h3>${String(comprobante.tipoComprobante).toUpperCase()}</h3>
+              <h2>${comprobante.numeroCompleto}</h2>
+              <p>Estado: ${comprobante.estado}</p>
+            </div>
+          </div>
+
+          <div class="grid">
+            <div class="field"><strong>Cliente:</strong><br/>${clienteNombre}</div>
+            <div class="field"><strong>Documento:</strong><br/>${documento}</div>
+            <div class="field"><strong>Fecha:</strong><br/>${new Date(comprobante.fechaEmision).toLocaleDateString()}</div>
+            <div class="field"><strong>Pedido:</strong><br/>#${comprobante.idPedido}</div>
+          </div>
+
+          <table>
+            <thead>
+              <tr>
+                <th>Descripción</th>
+                <th>Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Pedido personalizado MUBI #${comprobante.idPedido}</td>
+                <td>S/ ${Number(comprobante.total || 0).toFixed(2)}</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div class="totals">
+            <div><span>Subtotal</span><strong>S/ ${Number(comprobante.subtotal || 0).toFixed(2)}</strong></div>
+            <div><span>IGV</span><strong>S/ ${Number(comprobante.igv || 0).toFixed(2)}</strong></div>
+            <div class="total"><span>Total</span><strong>S/ ${Number(comprobante.total || 0).toFixed(2)}</strong></div>
+          </div>
+
+          <div class="footer">
+            <p>${comprobante.observacion || 'Comprobante generado desde el sistema MUBI.'}</p>
+          </div>
+        </div>
+      </body>
+    </html>
+  `;
+
+  const ventana = window.open('', '_blank');
+  ventana.document.write(html);
+  ventana.document.close();
+  ventana.print();
+};
   const getEstadoInfo = (estado) => {
     const value = String(estado || 'pendiente').toLowerCase();
 
@@ -300,7 +518,17 @@ export default function Pedidos({ role, user }) {
           )}
         </div>
       </div>
-
+      {modoCliente && checkoutPendiente.length > 0 && (
+        <div className="checkout-import-box">
+          <i className="bi bi-cart-check"></i>
+          <div>
+            <strong>Pedido importado desde tu carrito</strong>
+            <span>
+              Se cargaron {checkoutPendiente.length} producto(s) con un total estimado de S/ {checkoutTotal.toFixed(2)}.
+            </span>
+          </div>
+        </div>
+      )}
       {!modoCliente && (
         <>
           <label>Cliente</label>
@@ -451,7 +679,23 @@ export default function Pedidos({ role, user }) {
       </div>
 
       <div className="excel-upload-box">
-        <label>Excel de tallas, nombres y números</label>
+        <div className="excel-upload-header">
+          <div>
+            <label>Excel de tallas, nombres y números</label>
+            <small>
+              Opcional. Descarga la plantilla, complétala y revisa la vista previa antes de enviar.
+            </small>
+          </div>
+
+          <button
+            className="btn btn-outline-dark btn-sm"
+            type="button"
+            onClick={descargarPlantillaExcel}
+          >
+            <i className="bi bi-download"></i> Descargar plantilla
+          </button>
+        </div>
+
         <input
           className="form-control"
           type="file"
@@ -459,15 +703,68 @@ export default function Pedidos({ role, user }) {
           onChange={handleExcel}
         />
 
-        <small>
-          Opcional. Úsalo si tu pedido tiene varios nombres, tallas o números.
-        </small>
-
         {form.archivoExcelTallas && (
-          <div className="mt-2">
+          <div className="mt-2 d-flex gap-2 flex-wrap align-items-center">
             <span className="badge-soft">
               <i className="bi bi-file-earmark-excel"></i> {form.archivoExcelTallas}
             </span>
+
+            <button
+              className="btn btn-sm btn-outline-danger"
+              type="button"
+              onClick={limpiarExcel}
+            >
+              Limpiar
+            </button>
+          </div>
+        )}
+
+        {excelPreview.length > 0 && (
+          <div className="excel-preview-box">
+            <div className="excel-preview-header">
+              <div>
+                <strong>Vista previa del Excel</strong>
+                <span>{excelPreview.length} fila(s) detectada(s)</span>
+              </div>
+
+              <button
+                className={`btn btn-sm ${excelConfirmado ? 'btn-primary' : 'btn-outline-dark'}`}
+                type="button"
+                onClick={() => setExcelConfirmado(true)}
+              >
+                {excelConfirmado ? 'Vista previa confirmada' : 'Confirmar datos'}
+              </button>
+            </div>
+
+            <div className="table-responsive">
+              <table className="table align-middle excel-preview-table">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Talla</th>
+                    <th>Nombre</th>
+                    <th>Número</th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  {excelPreview.map(row => (
+                    <tr key={row.id}>
+                      <td>{row.id}</td>
+                      <td>{row.talla || '-'}</td>
+                      <td>{row.nombre || '-'}</td>
+                      <td>{row.numero || '-'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {!excelConfirmado && (
+              <small className="excel-warning">
+                Revisa los datos y presiona “Confirmar datos” antes de enviar el pedido.
+              </small>
+            )}
           </div>
         )}
       </div>
@@ -606,6 +903,7 @@ export default function Pedidos({ role, user }) {
         <div className="client-orders-grid">
           {pedidosCliente.map(p => {
             const estadoInfo = getEstadoInfo(p.estadoPedido);
+            const comprobantePedido = getComprobantePedido(p.idPedido);
 
             return (
               <article className="client-order-card" key={p.idPedido}>
@@ -692,6 +990,22 @@ export default function Pedidos({ role, user }) {
                   >
                     Ver detalle
                   </button>
+
+                  {comprobantePedido ? (
+                    <button
+                      className="btn btn-primary"
+                      type="button"
+                      onClick={() => imprimirComprobante(comprobantePedido)}
+                    >
+                      <i className="bi bi-receipt"></i> Ver comprobante
+                    </button>
+                  ) : (
+                    <span className="client-order-note">
+                      {String(p.estadoPedido).toLowerCase() === 'pagado'
+                        ? 'Comprobante pendiente de emisión'
+                        : 'Comprobante disponible al finalizar el pago'}
+                    </span>
+                  )}
                 </div>
               </article>
             );

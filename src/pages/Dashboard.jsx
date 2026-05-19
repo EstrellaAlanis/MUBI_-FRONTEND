@@ -1,6 +1,18 @@
 import { useEffect, useMemo, useState } from 'react';
 import StatCard from '../components/StatCard.jsx';
 import { api, endpoints } from '../services/api.js';
+import {
+  BarChart,
+  Bar,
+  PieChart,
+  Pie,
+  Cell,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  CartesianGrid
+} from 'recharts';
 
 const safeArray = (value) => Array.isArray(value) ? value : [];
 
@@ -93,22 +105,48 @@ export default function Dashboard({ role, user }) {
   );
 }).length;
 
-const ultimoPedido = pedidos[0];
+  const ultimoPedido = pedidos[0];
 
-const ultimosPagos = pagos.slice(0, 5);
+  const ultimosPagos = pagos.slice(0, 5);
 
-const materialesBajos = materiales.filter(
-  m => Number(m.stockActual) <= Number(m.stockMinimo)
-);
+  const materialesBajos = materiales.filter(
+    m => Number(m.stockActual) <= Number(m.stockMinimo)
+  );
 
-const porcentajePedidosAtendidos = pedidos.length
-  ? Math.round((entregados / pedidos.length) * 100)
-  : 0;
+  const porcentajePedidosAtendidos = pedidos.length
+    ? Math.round((entregados / pedidos.length) * 100)
+    : 0;
 
-const ingresosPendientes = pedidos.reduce(
-  (acc, p) => acc + Number(p.saldoPendiente || 0),
-  0
-);
+  const ingresosPendientes = pedidos.reduce(
+    (acc, p) => acc + Number(p.saldoPendiente || 0),
+    0
+  );
+  const pedidosOrdenadosFIFO = [...pedidos].sort((a, b) => {
+  const fechaA = new Date(a.fechaPedido || a.fechaRegistro || 0).getTime();
+  const fechaB = new Date(b.fechaPedido || b.fechaRegistro || 0).getTime();
+  return fechaA - fechaB;
+  });
+  const colaTrabajoFIFO = pedidosOrdenadosFIFO.filter(p => {
+    const estado = String(p.estadoPedido || '').toLowerCase();
+    return estado === 'pendiente' || estado === 'confirmado' || estado === 'pagado';
+  });
+  const siguientePedido = colaTrabajoFIFO[0];
+
+  const estadoChartData = [
+    { name: 'Pendientes', value: pendientes },
+    { name: 'Confirmados', value: confirmados },
+    { name: 'Pagados', value: pagados },
+    { name: 'En proceso', value: enProceso },
+    { name: 'Entregados', value: entregados }
+  ].filter(item => item.value > 0);
+
+  const ventasChartData = [
+    { name: 'Pagos', value: Number(totalPagos || 0) },
+    { name: 'Saldo pendiente', value: Number(ingresosPendientes || 0) }
+  ];
+
+  const COLORS = ['#59ff00', '#95ff77', '#00c853', '#ffc857', '#70d984'];
+
 
   const enviarIdeaPedido = () => {
     const texto = ideaPedido.trim();
@@ -127,9 +165,11 @@ const ingresosPendientes = pedidos.reduce(
       'ideaPedidoMubi',
       `Deseo pedir el producto "${p.nombre}" de la categoría ${p.categoria || 'MUBI'}.`
     );
-
     window.location.href = user ? '/pedido-personalizado' : '/login';
   };
+  const imagenProducto = (p) => {
+      return p.rutaImagenPrincipal ? `http://localhost:5071${p.rutaImagenPrincipal}` : '';
+    };
 
   if (role === 'cliente' && !user) {
     return (
@@ -195,10 +235,17 @@ const ingresosPendientes = pedidos.reduce(
           </div>
 
           <div className="mubi-product-showcase">
-            {productosDestacados.map((p, index) => (
-              <article className="mubi-product-card" key={p.idProducto}>
-                <div className={`mubi-product-img img-${index}`}>
-                  <i className="bi bi-bag-heart-fill"></i>
+            {productosDestacados.map((p, index) => {
+            const img = imagenProducto(p);
+
+            return (
+              <article className="mubi-product-card mubi-product-card-pro" key={p.idProducto}>
+                <div className={`mubi-product-img ${img ? 'has-image' : ''} img-${index}`}>
+                  {img ? (
+                    <img src={img} alt={p.nombre} />
+                  ) : (
+                    <i className="bi bi-bag-heart-fill"></i>
+                  )}
                 </div>
 
                 <div className="mubi-product-info">
@@ -214,7 +261,8 @@ const ingresosPendientes = pedidos.reduce(
                   </div>
                 </div>
               </article>
-            ))}
+                );
+})}
 
             {!productosDestacados.length && (
               <article className="mubi-product-card">
@@ -370,11 +418,18 @@ const ingresosPendientes = pedidos.reduce(
           </div>
 
           <div className="mubi-product-showcase">
-            {productos.slice(0, 3).map((p, index) => (
-              <article className="mubi-product-card" key={p.idProducto}>
-                <div className={`mubi-product-img img-${index}`}>
-                  <i className="bi bi-stars"></i>
-                </div>
+            {productos.slice(0, 3).map((p, index) => {
+              const img = imagenProducto(p);
+
+              return (
+                <article className="mubi-product-card mubi-product-card-pro" key={p.idProducto}>
+                  <div className={`mubi-product-img ${img ? 'has-image' : ''} img-${index}`}>
+                    {img ? (
+                      <img src={img} alt={p.nombre} />
+                    ) : (
+                      <i className="bi bi-stars"></i>
+                    )}
+                  </div>
 
                 <div className="mubi-product-info">
                   <span>{p.categoria || 'MUBI'}</span>
@@ -388,8 +443,9 @@ const ingresosPendientes = pedidos.reduce(
                     </button>
                   </div>
                 </div>
-              </article>
-            ))}
+                  </article>
+                  );
+                })}
           </div>
         </section>
       </div>
@@ -460,6 +516,118 @@ const ingresosPendientes = pedidos.reduce(
         note="Materiales que requieren atención"
       />
     </div>
+    <div className="admin-data-grid mt-4">
+      <section className="panel-card admin-chart-card">
+        <div className="section-actions">
+          <div>
+            <span className="badge-soft">Estados</span>
+            <h4>Distribución de pedidos</h4>
+          </div>
+        </div>
+
+        <div className="chart-box">
+          {estadoChartData.length ? (
+            <ResponsiveContainer width="100%" height={280}>
+              <PieChart>
+                <Pie
+                  data={estadoChartData}
+                  dataKey="value"
+                  nameKey="name"
+                  outerRadius={100}
+                  label
+                >
+                  {estadoChartData.map((entry, index) => (
+                    <Cell key={entry.name} fill={COLORS[index % COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip />
+              </PieChart>
+            </ResponsiveContainer>
+          ) : (
+            <p className="text-muted mb-0">No hay datos suficientes para mostrar el gráfico.</p>
+          )}
+        </div>
+      </section>
+
+      <section className="panel-card admin-chart-card">
+        <div className="section-actions">
+          <div>
+            <span className="badge-soft">Finanzas</span>
+            <h4>Pagos vs saldo pendiente</h4>
+          </div>
+        </div>
+
+        <div className="chart-box">
+          <ResponsiveContainer width="100%" height={280}>
+            <BarChart data={ventasChartData}>
+              <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
+              <XAxis dataKey="name" />
+              <YAxis />
+              <Tooltip />
+              <Bar dataKey="value" radius={[12, 12, 0, 0]} fill="#59ff00" />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      </section>
+    </div>
+
+    <section className="panel-card fifo-board mt-4">
+      <div className="section-actions">
+        <div>
+          <span className="badge-soft">FIFO</span>
+          <h4>Cola de trabajo por llegada</h4>
+          <p className="mb-0">
+            Los pedidos se ordenan del más antiguo al más reciente para procesarlos de forma justa.
+          </p>
+        </div>
+
+        <a className="btn btn-sm btn-primary" href="/pedidos">
+          Ir a pedidos
+        </a>
+      </div>
+
+      {siguientePedido ? (
+        <article className="next-order-card">
+          <div>
+            <span>Siguiente pedido a procesar</span>
+            <h3>Pedido #{siguientePedido.idPedido}</h3>
+            <p>{siguientePedido.cliente || `Cliente #${siguientePedido.idCliente}`}</p>
+          </div>
+
+          <div>
+            <strong>S/ {Number(siguientePedido.montoTotal || 0).toFixed(2)}</strong>
+            <small>{new Date(siguientePedido.fechaPedido).toLocaleString()}</small>
+          </div>
+        </article>
+      ) : (
+        <div className="empty-state">
+          <i className="bi bi-check-circle"></i>
+          <h4>No hay pedidos pendientes en cola</h4>
+          <p>La operación está al día.</p>
+        </div>
+      )}
+
+      <div className="fifo-list">
+        {colaTrabajoFIFO.slice(0, 8).map((p, index) => (
+          <article className={`fifo-item ${index === 0 ? 'active' : ''}`} key={p.idPedido}>
+            <div className="fifo-position">{index + 1}</div>
+
+            <div>
+              <strong>Pedido #{p.idPedido}</strong>
+              <span>{p.cliente || `Cliente #${p.idCliente}`}</span>
+            </div>
+
+            <span className={`status-pill status-${String(p.estadoPedido).toLowerCase()}`}>
+              {p.estadoPedido}
+            </span>
+
+            <small>{new Date(p.fechaPedido).toLocaleString()}</small>
+
+            <strong>S/ {Number(p.montoTotal || 0).toFixed(2)}</strong>
+          </article>
+        ))}
+      </div>
+    </section>
 
     <div className="admin-kpi-grid">
       <article className="admin-kpi-card">

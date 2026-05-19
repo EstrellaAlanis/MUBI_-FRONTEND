@@ -13,6 +13,7 @@ import Contacto from './pages/Contacto.jsx';
 import Reportes from './pages/Reportes.jsx';
 import Usuarios from './pages/Usuarios.jsx';
 import Comprobantes from './pages/Comprobantes.jsx';
+import Carrito from './pages/Carrito.jsx';
 
 function RequireAdmin({ user, children }) {
   if (user?.role === 'admin') return children;
@@ -77,6 +78,7 @@ export default function App() {
             />
 
             <Route path="/productos" element={<Productos role={role} user={user} />} />
+            <Route path="/carrito" element={<Carrito role={role} user={user} />} />
 
             <Route
               path="/clientes"

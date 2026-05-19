@@ -15,6 +15,7 @@ const emptyForm = {
 export default function Pagos({ role, user }) {
   const [pagos, setPagos] = useState([]);
   const [pedidos, setPedidos] = useState([]);
+  const [comprobantes, setComprobantes] = useState([]);
   const [form, setForm] = useState(emptyForm);
   const [archivoComprobante, setArchivoComprobante] = useState(null);
   const [previewComprobante, setPreviewComprobante] = useState('');
@@ -22,9 +23,10 @@ export default function Pagos({ role, user }) {
   const [error, setError] = useState('');
 
   const load = async () => {
-    const [pagosData, pedidosData] = await Promise.all([
+    const [pagosData, pedidosData, comprobantesData] = await Promise.all([
       api.get(endpoints.pagos),
-      api.get(endpoints.pedidos)
+      api.get(endpoints.pedidos),
+      api.get(endpoints.comprobantes)
     ]);
 
     const pagosList = Array.isArray(pagosData) ? pagosData : [];
@@ -32,6 +34,7 @@ export default function Pagos({ role, user }) {
 
     setPagos(pagosList);
     setPedidos(pedidosList);
+    setComprobantes(Array.isArray(comprobantesData) ? comprobantesData : []);
 
     const pedidosCliente = getPedidosCliente(pedidosList);
     const pedidosDisponibles = role === 'cliente'
@@ -178,7 +181,12 @@ export default function Pagos({ role, user }) {
     const pedido = pedidos.find(p => Number(p.idPedido) === Number(id));
     return pedido?.cliente || `Pedido #${id}`;
   };
-
+  const getComprobantePedido = (idPedido) => {
+    return comprobantes.find(c =>
+      Number(c.idPedido) === Number(idPedido) &&
+      String(c.estado || '').toLowerCase() === 'emitido'
+    );
+  };
   const title = role === 'admin' ? 'Gestión de pagos' : 'Mis pagos';
   const subtitle = role === 'admin'
     ? 'Control de adelantos, pagos finales, métodos de pago y saldo pendiente.'
@@ -356,7 +364,8 @@ export default function Pagos({ role, user }) {
                     <th>Monto</th>
                     <th>Método</th>
                     <th>Tipo</th>
-                    <th>Comprobante</th>
+                    <th>Comprobante pago</th>
+                    <th>Boleta / Factura</th>
                     <th>Fecha</th>
                     {role === 'admin' && <th></th>}
                   </tr>
@@ -379,15 +388,25 @@ export default function Pagos({ role, user }) {
                             rel="noreferrer"
                           >
                             <i className="bi bi-receipt"></i>
-                            Ver comprobante
+                            Ver pago
                           </a>
                         ) : (
                           <span className="text-muted">Sin comprobante</span>
                         )}
                       </td>
 
-                      <td>{new Date(p.fechaPago).toLocaleDateString()}</td>
+                      <td>
+                        {getComprobantePedido(p.idPedido) ? (
+                          <span className="badge-soft">
+                            <i className="bi bi-receipt-cutoff"></i>{' '}
+                            {getComprobantePedido(p.idPedido).numeroCompleto}
+                          </span>
+                        ) : (
+                          <span className="text-muted">Pendiente</span>
+                        )}
+                      </td>
 
+                      <td>{new Date(p.fechaPago).toLocaleDateString()}</td>
                       {role === 'admin' && (
                         <td>
                           <button
@@ -403,7 +422,7 @@ export default function Pagos({ role, user }) {
 
                   {!pagosCliente.length && (
                     <tr>
-                      <td colSpan={role === 'admin' ? 7 : 6}>
+                      <td colSpan={role === 'admin' ? 8 : 7}>
                         No hay pagos registrados.
                       </td>
                     </tr>

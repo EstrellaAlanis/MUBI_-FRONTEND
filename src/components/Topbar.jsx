@@ -5,7 +5,7 @@ export default function Topbar({ role, user, onLogout }) {
     return (
       <header className="client-web-navbar">
         <Link to="/" className="client-brand">
-          <div className="client-brand-logo">M</div>
+          <div className="client-brand-logo"> <img src="public/img/image.png" alt="50px" width="50px" /></div>
           <div>
             <strong>MUBI</strong>
             <span>Textil Store</span>
@@ -15,6 +15,7 @@ export default function Topbar({ role, user, onLogout }) {
         <nav className="client-menu">
           <NavLink to="/">Inicio</NavLink>
           <NavLink to="/productos">Catálogo</NavLink>
+          <NavLink to="/carrito">Carrito</NavLink>
           <NavLink to="/pedido-personalizado">Hacer pedido</NavLink>
 
           {user && (
@@ -28,6 +29,9 @@ export default function Topbar({ role, user, onLogout }) {
         </nav>
 
         <div className="client-navbar-actions">
+          <Link className="client-cart-btn" to="/carrito" aria-label="Carrito">
+            <i className="bi bi-cart3"></i>
+          </Link>
           {user ? (
             <>
               <span className="client-session">
