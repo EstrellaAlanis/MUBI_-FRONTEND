@@ -4457,3 +4457,717 @@ label,
     text-align: left;
   }
 }
+/* =====================================================
+   MUBI RESPONSIVE REFINADO - PEGAR AL FINAL DE app.css
+   NO reemplaza tu CSS. Solo refuerza lo que faltaba.
+   Mantiene estructura actual: PC + tablet + celular.
+===================================================== */
+
+/* ===== 1. Seguridad general responsive ===== */
+html,
+body,
+#root {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+img,
+video {
+  max-width: 100%;
+}
+
+button,
+a,
+input,
+select,
+textarea {
+  -webkit-tap-highlight-color: transparent;
+}
+
+.form-control,
+.form-select,
+.btn {
+  min-height: 44px;
+}
+
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.table-responsive table {
+  min-width: 760px;
+}
+
+/* ===== 2. Navbar cliente más estable en PC y móvil ===== */
+.client-web-navbar {
+  flex-wrap: wrap;
+}
+
+.client-brand,
+.client-navbar-actions {
+  flex-shrink: 0;
+}
+
+.client-brand-logo img {
+  display: block;
+  width: 50px;
+  height: 50px;
+  object-fit: contain;
+}
+
+.client-menu {
+  min-width: 0;
+}
+
+.client-menu a {
+  white-space: nowrap;
+}
+
+.client-cart-btn {
+  flex: 0 0 auto;
+}
+
+/* ===== 3. Cards producto más consistentes sin cambiar estructura ===== */
+.product-card-premium,
+.mubi-product-card-pro {
+  background:
+    radial-gradient(circle at 90% 8%, rgba(89, 255, 0, .10), transparent 28%),
+    linear-gradient(180deg, rgba(18, 27, 22, .96), rgba(9, 14, 11, .98));
+  border: 1px solid rgba(89, 255, 0, .22);
+  box-shadow:
+    0 20px 60px rgba(0, 0, 0, .36),
+    inset 0 0 0 1px rgba(255, 255, 255, .025);
+}
+
+.product-card-premium:hover,
+.mubi-product-card-pro:hover {
+  border-color: rgba(89, 255, 0, .52);
+  box-shadow:
+    0 30px 80px rgba(0, 0, 0, .46),
+    0 0 35px rgba(89, 255, 0, .12);
+}
+
+.product-card-premium .product-body,
+.mubi-product-card-pro .mubi-product-info {
+  background:
+    linear-gradient(180deg, rgba(16, 23, 19, .98), rgba(8, 13, 10, .98));
+}
+
+.product-card-premium h3,
+.mubi-product-card-pro h3,
+.product-card-premium strong,
+.mubi-product-card-pro strong {
+  color: #f4fff0;
+}
+
+.product-card-premium p,
+.mubi-product-card-pro p {
+  color: rgba(244, 255, 240, .68);
+}
+
+.product-art-real,
+.mubi-product-img.has-image {
+  background: #071008;
+}
+
+.product-art-real img,
+.mubi-product-img.has-image img {
+  transition: transform .35s ease, filter .35s ease;
+}
+
+.product-card-premium:hover .product-art-real img,
+.mubi-product-card-pro:hover .mubi-product-img.has-image img {
+  transform: scale(1.055);
+  filter: brightness(1.08) contrast(1.08) saturate(1.10);
+}
+
+/* ===== 4. Modales seguros para celular ===== */
+.product-modal-backdrop,
+.modal-backdrop-custom {
+  overflow-y: auto;
+}
+
+.product-option-modal,
+.pedido-modal {
+  margin: auto;
+  max-width: calc(100vw - 24px);
+}
+
+/* ===== 5. Carrito y textos largos ===== */
+.cart-item-info,
+.cart-summary,
+.form-card,
+.client-order-form,
+.panel-card {
+  min-width: 0;
+}
+
+.cart-custom-list small,
+.cart-item-info p,
+.client-order-card p,
+.pedido-detail-card p {
+  overflow-wrap: anywhere;
+}
+
+/* ===== 6. Dashboard admin y FIFO ===== */
+.admin-data-grid {
+  align-items: stretch;
+}
+
+.chart-box {
+  min-height: 280px;
+  overflow: hidden;
+}
+
+.fifo-list {
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+
+.stat-card,
+.report-card,
+.admin-kpi-card,
+.status-box {
+  min-width: 0;
+}
+
+.stat-card h3,
+.report-card strong,
+.admin-kpi-card strong,
+.status-box strong {
+  overflow-wrap: anywhere;
+}
+
+/* ===== 7. Tablet / laptop pequeña ===== */
+@media (max-width: 1180px) {
+  .content-area {
+    padding: 24px 24px 44px;
+  }
+
+  .product-grid,
+  .mubi-product-showcase {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: min(100% - 36px, 980px);
+  }
+
+  .client-order-layout,
+  .cart-layout,
+  .admin-data-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .cart-summary,
+  .client-order-help {
+    position: static;
+  }
+
+  .admin-dashboard-hero,
+  .hero-card,
+  .client-hero {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-kpi-grid,
+  .admin-shortcuts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* ===== 8. Tablet / móvil grande ===== */
+@media (max-width: 900px) {
+  .website-mode,
+  .public-mode,
+  .client-mode {
+    overflow-x: hidden;
+  }
+
+  .client-web-navbar {
+    padding: 12px 18px;
+    gap: 12px;
+    align-items: stretch;
+  }
+
+  .client-brand {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .client-menu {
+    order: 3;
+    width: 100%;
+    justify-content: flex-start;
+    overflow-x: auto;
+    gap: 14px;
+    padding: 8px 2px 10px;
+    scrollbar-width: thin;
+  }
+
+  .client-menu::-webkit-scrollbar {
+    height: 5px;
+  }
+
+  .client-menu::-webkit-scrollbar-thumb {
+    background: rgba(89, 255, 0, .35);
+    border-radius: 999px;
+  }
+
+  .client-navbar-actions {
+    order: 2;
+    width: 100%;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    align-items: center;
+  }
+
+  .client-session,
+  .client-login-btn {
+    justify-content: center;
+  }
+
+  .mubi-hero-actions,
+  .hero-actions,
+  .product-card-actions,
+  .product-option-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .mubi-hero-actions .btn,
+  .hero-actions .btn,
+  .product-card-actions .btn,
+  .product-option-actions .btn {
+    width: 100%;
+  }
+
+  .section-actions,
+  .filter-bar,
+  .client-orders-hero,
+  .client-order-top,
+  .excel-upload-header,
+  .excel-preview-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .product-option-layout,
+  .pedido-detail-grid,
+  .modal-design-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .product-option-image {
+    min-height: 320px;
+    max-height: 420px;
+  }
+
+  .custom-row {
+    grid-template-columns: 1fr;
+    background: rgba(255, 255, 255, .045);
+    border: 1px solid rgba(89, 255, 0, .14);
+    border-radius: 16px;
+    padding: 12px;
+  }
+
+  .custom-row button {
+    width: 100%;
+  }
+}
+
+/* ===== 9. Celular general ===== */
+@media (max-width: 760px) {
+  body {
+    min-width: 320px;
+  }
+
+  .content-area {
+    padding: 18px 12px 36px;
+  }
+
+  .website-mode .content-area {
+    padding: 0;
+  }
+
+  .client-web-navbar {
+    position: sticky;
+    top: 0;
+    padding: 10px 14px;
+    background: rgba(8, 13, 10, .94);
+    border-bottom: 1px solid rgba(89, 255, 0, .18);
+  }
+
+  .client-brand strong,
+  .client-brand span,
+  .client-menu a,
+  .client-session,
+  .client-login-btn {
+    color: #f4fff0;
+  }
+
+  .client-brand-logo,
+  .client-brand-logo img {
+    width: 44px;
+    height: 44px;
+  }
+
+  .client-brand-logo {
+    border-radius: 14px;
+  }
+
+  .client-menu a {
+    background: rgba(255, 255, 255, .06);
+    border: 1px solid rgba(89, 255, 0, .14);
+    border-radius: 999px;
+    padding: 9px 12px;
+  }
+
+  .client-menu a.active::after {
+    display: none;
+  }
+
+  .client-menu a.active {
+    background: rgba(89, 255, 0, .14);
+    border-color: rgba(89, 255, 0, .38);
+  }
+
+  .client-navbar-actions {
+    grid-template-columns: 44px 1fr;
+    gap: 8px;
+  }
+
+  .client-cart-btn {
+    width: 44px;
+    height: 44px;
+    background: rgba(89, 255, 0, .12);
+    border-color: rgba(89, 255, 0, .35);
+  }
+
+  .client-login-btn,
+  .client-session {
+    width: 100%;
+    min-height: 44px;
+  }
+
+  .mubi-video-hero {
+    min-height: 540px;
+    padding: 44px 18px;
+  }
+
+  .mubi-video-hero h1,
+  .mubi-web-hero h1,
+  .mubi-client-hero h1,
+  .admin-dashboard-hero h1 {
+    font-size: clamp(31px, 10vw, 42px);
+    line-height: 1.02;
+  }
+
+  .mubi-video-hero p,
+  .mubi-web-hero p,
+  .mubi-client-hero p,
+  .admin-dashboard-hero p {
+    font-size: 14px;
+    line-height: 1.55;
+  }
+
+  .website-mode .mubi-section,
+  .quick-order-card,
+  .website-mode .page-header,
+  .catalog-banner,
+  .search-access-box,
+  .product-grid,
+  .mubi-product-showcase,
+  .client-orders-page,
+  .client-create-order-page,
+  .cart-page {
+    width: min(100% - 24px, 560px);
+  }
+
+  .product-grid,
+  .mubi-product-showcase,
+  .stats-grid,
+  .admin-kpi-grid,
+  .admin-shortcuts,
+  .order-status-grid,
+  .material-grid,
+  .client-action-grid,
+  .simple-form-grid,
+  .client-upload-area,
+  .form-grid,
+  .client-order-summary {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .product-art,
+  .mubi-product-img {
+    height: 230px;
+  }
+
+  .product-footer,
+  .mubi-product-info div {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .product-footer .btn,
+  .mubi-product-info .btn {
+    width: 100%;
+  }
+
+  .catalog-banner,
+  .client-orders-hero,
+  .admin-dashboard-hero,
+  .cart-hero,
+  .quick-order-card,
+  .panel-card {
+    border-radius: 22px;
+    padding: 20px;
+  }
+
+  .cart-item {
+    grid-template-columns: 1fr;
+    padding: 14px;
+  }
+
+  .cart-item-img {
+    height: 220px;
+  }
+
+  .cart-item-side {
+    justify-items: stretch;
+  }
+
+  .cart-qty {
+    grid-template-columns: 46px 1fr 46px;
+  }
+
+  .product-option-modal,
+  .pedido-modal {
+    width: min(100%, 560px);
+    border-radius: 22px;
+    max-height: 94vh;
+  }
+
+  .product-option-image {
+    min-height: 280px;
+  }
+
+  .product-option-content {
+    padding: 22px;
+  }
+
+  .option-buttons {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .option-buttons button {
+    width: 100%;
+  }
+
+  .product-option-summary,
+  .next-order-card {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .chart-box {
+    height: 260px;
+    min-height: 260px;
+    padding: 8px;
+  }
+
+  .fifo-item {
+    grid-template-columns: 42px 1fr;
+    align-items: start;
+  }
+
+  .fifo-item .status-pill,
+  .fifo-item small,
+  .fifo-item > strong {
+    grid-column: 2;
+  }
+
+  .login-screen {
+    grid-template-columns: 1fr;
+    padding: 14px;
+  }
+
+  .login-brand-panel {
+    display: none;
+  }
+
+  .login-card {
+    border-radius: 24px;
+    padding: 22px;
+  }
+
+  .login-form-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ===== 10. Celular pequeño ===== */
+@media (max-width: 420px) {
+  .client-web-navbar {
+    padding: 10px;
+  }
+
+  .client-brand strong {
+    font-size: 20px;
+  }
+
+  .client-menu {
+    gap: 8px;
+  }
+
+  .client-menu a {
+    font-size: 12px;
+    padding: 8px 10px;
+  }
+
+  .mubi-video-hero {
+    min-height: 500px;
+    padding: 36px 14px;
+  }
+
+  .mubi-video-hero h1,
+  .mubi-web-hero h1,
+  .mubi-client-hero h1 {
+    font-size: 30px;
+  }
+
+  .badge-soft,
+  .status-pill,
+  .category-pill {
+    font-size: 11px;
+    padding: 6px 9px;
+  }
+
+  .btn,
+  .btn-primary,
+  .btn-outline-dark,
+  .btn-glass {
+    width: 100%;
+    justify-content: center;
+    text-align: center;
+  }
+
+  .product-art,
+  .mubi-product-img,
+  .cart-item-img {
+    height: 200px;
+  }
+
+  .product-option-image {
+    min-height: 240px;
+  }
+
+  .product-option-content {
+    padding: 18px;
+  }
+
+  .quantity-control {
+    grid-template-columns: 44px 1fr 44px;
+  }
+
+  .form-control,
+  .form-select {
+    font-size: 14px;
+    padding: 11px 12px;
+  }
+
+  .table-responsive table {
+    min-width: 680px;
+  }
+
+  .admin-hero-mini strong {
+    font-size: 42px;
+  }
+}
+
+/* ===== 11. Celular horizontal ===== */
+@media (max-height: 520px) and (orientation: landscape) {
+  .client-web-navbar,
+  .topbar {
+    position: relative;
+  }
+
+  .mubi-video-hero {
+    min-height: auto;
+    padding-top: 34px;
+    padding-bottom: 34px;
+  }
+
+  .product-option-modal,
+  .pedido-modal {
+    max-height: 88vh;
+  }
+}
+
+/* ===== 12. Admin móvil: menú horizontal usable ===== */
+@media (max-width: 760px) {
+  .admin-mode .sidebar {
+    position: sticky;
+    top: 0;
+    z-index: 130;
+    width: 100%;
+    height: auto;
+    padding: 10px;
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+    overflow-x: auto;
+    border-right: 0;
+    border-bottom: 1px solid rgba(89, 255, 0, .18);
+    background: rgba(8, 13, 10, .96);
+  }
+
+  .admin-mode .brand {
+    flex: 0 0 auto;
+  }
+
+  .admin-mode .brand-logo {
+    width: 44px;
+    height: 44px;
+    border-radius: 14px;
+  }
+
+  .admin-mode .nav-list {
+    display: flex;
+    gap: 8px;
+    flex: 1 0 auto;
+  }
+
+  .admin-mode .nav-item {
+    min-width: 48px;
+    padding: 12px;
+    border-radius: 14px;
+  }
+
+  .admin-mode .nav-item span,
+  .admin-mode .brand div:not(.brand-logo),
+  .admin-mode .sidebar-card {
+    display: none;
+  }
+
+  .admin-mode .topbar {
+    position: relative;
+  }
+}
+
+/* ===== 13. Accesibilidad táctil ===== */
+@media (pointer: coarse) {
+  .btn,
+  .nav-item,
+  .client-menu a,
+  .client-login-btn,
+  .client-cart-btn,
+  .option-buttons button,
+  .quantity-control button,
+  .cart-qty button,
+  .custom-row button {
+    min-height: 44px;
+  }
+}
