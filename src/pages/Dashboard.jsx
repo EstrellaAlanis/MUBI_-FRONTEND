@@ -538,323 +538,275 @@ export default function Dashboard({ role, user }) {
   }
 
   return (
-  <div className="fade-in admin-dashboard-page">
-    {error && (
-      <div className="alert alert-danger">
-        No se pudo conectar al backend: {error}
-      </div>
-    )}
-
-    <section className="admin-dashboard-hero">
-      <div>
-        <span className="badge-soft">Panel del dueño</span>
-        <h1>Resumen general de MUBI</h1>
-        <p>
-          Controla pedidos, pagos, clientes, catálogo e inventario desde una sola vista.
-          Esta pantalla ayuda a tomar decisiones rápidas para la operación diaria.
-        </p>
-
-        <div className="hero-actions">
-          <a className="btn btn-primary" href="/pedidos">
-            Revisar pedidos
-          </a>
-
-          <a className="btn btn-outline-dark" href="/pagos">
-            Ver pagos
-          </a>
+    <div className="fade-in admin-dashboard-page admin-control-dashboard">
+      {error && (
+        <div className="alert alert-danger">
+          No se pudo conectar al backend: {error}
         </div>
-      </div>
+      )}
 
-      <div className="admin-hero-mini">
-        <span>Atención de pedidos</span>
-        <strong>{porcentajePedidosAtendidos}%</strong>
-        <p>Pedidos entregados respecto al total registrado.</p>
-      </div>
-    </section>
+      <section className="admin-control-hero">
+        <div className="admin-control-hero-content">
+          <span className="badge-soft">Centro de control MUBI</span>
+          <h1>Resumen operativo del negocio</h1>
+          <p>
+            Revisa pedidos pendientes, pagos, ventas, clientes, stock y producción desde una sola pantalla.
+            El objetivo es que el administrador tome decisiones rápidas sin entrar módulo por módulo.
+          </p>
 
-    <div className="stats-grid">
-      <StatCard
-        icon="bi-cash-stack"
-        label="Ingresos registrados"
-        value={`S/ ${totalPagos.toFixed(2)}`}
-        note="Pagos registrados en el sistema"
-      />
+          <div className="admin-control-actions">
+            <a className="btn btn-primary" href="/pedidos">
+              <i className="bi bi-clipboard-check"></i> Atender cola FIFO
+            </a>
 
-      <StatCard
-        icon="bi-hourglass-split"
-        label="Pendientes"
-        value={pendientes}
-        note="Pedidos por revisar"
-      />
+            <a className="btn btn-outline-dark" href="/pagos">
+              <i className="bi bi-cash-coin"></i> Revisar pagos
+            </a>
 
-      <StatCard
-        icon="bi-truck"
-        label="En proceso"
-        value={enProceso}
-        note="Pedidos en producción"
-      />
-
-      <StatCard
-        icon="bi-exclamation-triangle"
-        label="Stock bajo"
-        value={stockBajo}
-        note="Materiales que requieren atención"
-      />
-    </div>
-    <div className="admin-data-grid mt-4">
-      <section className="panel-card admin-chart-card">
-        <div className="section-actions">
-          <div>
-            <span className="badge-soft">Estados</span>
-            <h4>Distribución de pedidos</h4>
+            <a className="btn btn-outline-dark" href="/comprobantes">
+              <i className="bi bi-receipt-cutoff"></i> Emitir comprobantes
+            </a>
           </div>
         </div>
 
-        <div className="chart-box">
-          {estadoChartData.length ? (
-            <ResponsiveContainer width="100%" height={280}>
-              <PieChart>
-                <Pie
-                  data={estadoChartData}
-                  dataKey="value"
-                  nameKey="name"
-                  outerRadius={100}
-                  label
-                >
-                  {estadoChartData.map((entry, index) => (
-                    <Cell key={entry.name} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
+        <div className={`admin-next-order-preview ${siguientePedido ? 'active' : ''}`}>
+          <span className="badge-soft">Siguiente atención</span>
+
+          {siguientePedido ? (
+            <>
+              <strong>Pedido #{siguientePedido.idPedido}</strong>
+              <p>{siguientePedido.cliente || `Cliente #${siguientePedido.idCliente}`}</p>
+              <small>
+                FIFO: pedido más antiguo pendiente de la cola operativa.
+              </small>
+              <a className="btn btn-primary w-100 mt-3" href="/pedidos">
+                Revisar ahora
+              </a>
+            </>
           ) : (
-            <p className="text-muted mb-0">No hay datos suficientes para mostrar el gráfico.</p>
+            <>
+              <i className="bi bi-check2-circle"></i>
+              <strong>Sin cola pendiente</strong>
+              <p>No hay pedidos esperando atención inmediata.</p>
+            </>
           )}
         </div>
       </section>
 
-      <section className="panel-card admin-chart-card">
-        <div className="section-actions">
-          <div>
-            <span className="badge-soft">Finanzas</span>
-            <h4>Pagos vs saldo pendiente</h4>
-          </div>
-        </div>
-
-        <div className="chart-box">
-          <ResponsiveContainer width="100%" height={280}>
-            <BarChart data={ventasChartData}>
-              <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
-              <XAxis dataKey="name" />
-              <YAxis />
-              <Tooltip />
-              <Bar dataKey="value" radius={[12, 12, 0, 0]} fill="#59ff00" />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-      </section>
-    </div>
-
-    <section className="panel-card fifo-board mt-4">
-      <div className="section-actions">
-        <div>
-          <span className="badge-soft">FIFO</span>
-          <h4>Cola de trabajo por llegada</h4>
-          <p className="mb-0">
-            Los pedidos se ordenan del más antiguo al más reciente para procesarlos de forma justa.
-          </p>
-        </div>
-
-        <a className="btn btn-sm btn-primary" href="/pedidos">
-          Ir a pedidos
-        </a>
-      </div>
-
-      {siguientePedido ? (
-        <article className="next-order-card">
-          <div>
-            <span>Siguiente pedido a procesar</span>
-            <h3>Pedido #{siguientePedido.idPedido}</h3>
-            <p>{siguientePedido.cliente || `Cliente #${siguientePedido.idCliente}`}</p>
-          </div>
-
-          <div>
-            <strong>S/ {Number(siguientePedido.montoTotal || 0).toFixed(2)}</strong>
-            <small>{new Date(siguientePedido.fechaPedido).toLocaleString()}</small>
-          </div>
+      <section className="admin-kpi-grid admin-control-kpis">
+        <article className="admin-kpi-card">
+          <span>Pedidos totales</span>
+          <strong>{pedidos.length}</strong>
+          <p>{pedidosHoy} pedido(s) registrados hoy.</p>
         </article>
-      ) : (
-        <div className="empty-state">
-          <i className="bi bi-check-circle"></i>
-          <h4>No hay pedidos pendientes en cola</h4>
-          <p>La operación está al día.</p>
-        </div>
-      )}
 
-      <div className="fifo-list">
-        {colaTrabajoFIFO.slice(0, 8).map((p, index) => (
-          <article className={`fifo-item ${index === 0 ? 'active' : ''}`} key={p.idPedido}>
-            <div className="fifo-position">{index + 1}</div>
+        <article className="admin-kpi-card priority">
+          <span>Pendientes</span>
+          <strong>{pendientes}</strong>
+          <p>Requieren revisión del admin.</p>
+        </article>
 
+        <article className="admin-kpi-card">
+          <span>Pagos registrados</span>
+          <strong>S/ {totalPagos.toFixed(2)}</strong>
+          <p>Ingresos registrados en pagos.</p>
+        </article>
+
+        <article className="admin-kpi-card">
+          <span>Saldo pendiente</span>
+          <strong>S/ {ingresosPendientes.toFixed(2)}</strong>
+          <p>Importe por cobrar.</p>
+        </article>
+
+        <article className="admin-kpi-card">
+          <span>Clientes</span>
+          <strong>{clientes.length}</strong>
+          <p>Base comercial registrada.</p>
+        </article>
+
+        <article className="admin-kpi-card">
+          <span>Productos</span>
+          <strong>{productos.length}</strong>
+          <p>Catálogo disponible.</p>
+        </article>
+
+        <article className="admin-kpi-card warning">
+          <span>Stock bajo</span>
+          <strong>{stockBajo}</strong>
+          <p>Materiales por reponer.</p>
+        </article>
+
+        <article className="admin-kpi-card success">
+          <span>Atendidos</span>
+          <strong>{porcentajePedidosAtendidos}%</strong>
+          <p>Pedidos entregados del total.</p>
+        </article>
+      </section>
+
+      <section className="admin-dashboard-grid">
+        <article className="panel-card admin-chart-card">
+          <div className="section-actions">
             <div>
-              <strong>Pedido #{p.idPedido}</strong>
-              <span>{p.cliente || `Cliente #${p.idCliente}`}</span>
+              <span className="badge-soft">Estados</span>
+              <h4>Estado general de pedidos</h4>
             </div>
 
-            <span className={`status-pill status-${String(p.estadoPedido).toLowerCase()}`}>
-              {p.estadoPedido}
-            </span>
-
-            <small>{new Date(p.fechaPedido).toLocaleString()}</small>
-
-            <strong>S/ {Number(p.montoTotal || 0).toFixed(2)}</strong>
-          </article>
-        ))}
-      </div>
-    </section>
-
-    <div className="admin-kpi-grid">
-      <article className="admin-kpi-card">
-        <span>Pedidos de hoy</span>
-        <strong>{pedidosHoy}</strong>
-        <p>Pedidos registrados durante el día.</p>
-      </article>
-
-      <article className="admin-kpi-card">
-        <span>Saldo pendiente</span>
-        <strong>S/ {ingresosPendientes.toFixed(2)}</strong>
-        <p>Dinero pendiente de pago.</p>
-      </article>
-
-      <article className="admin-kpi-card">
-        <span>Clientes registrados</span>
-        <strong>{clientes.length}</strong>
-        <p>Base actual de clientes.</p>
-      </article>
-
-      <article className="admin-kpi-card">
-        <span>Productos activos</span>
-        <strong>{productos.length}</strong>
-        <p>Catálogo disponible.</p>
-      </article>
-    </div>
-
-    <div className="admin-alert-card mt-4">
-      <div>
-        <span className="badge-soft">Notificación admin</span>
-        <h3>🔔 Tienes {pendientes} pedido(s) pendiente(s) por revisar</h3>
-        <p>
-          Revisa el diseño frontal/posterior, Excel de tallas, pagos y estado antes de iniciar producción.
-        </p>
-      </div>
-
-      <a className="btn btn-primary" href="/pedidos">
-        Ver pedidos
-      </a>
-    </div>
-
-    <div className="order-status-grid mt-4">
-      <div className="status-box">
-        <span>Pendientes</span>
-        <strong>{pendientes}</strong>
-      </div>
-
-      <div className="status-box">
-        <span>Confirmados</span>
-        <strong>{confirmados}</strong>
-      </div>
-
-      <div className="status-box">
-        <span>Pagados</span>
-        <strong>{pagados}</strong>
-      </div>
-
-      <div className="status-box">
-        <span>En proceso</span>
-        <strong>{enProceso}</strong>
-      </div>
-
-      <div className="status-box">
-        <span>Entregados</span>
-        <strong>{entregados}</strong>
-      </div>
-    </div>
-
-    <div className="row g-4 mt-1">
-      <div className="col-lg-7">
-        <div className="panel-card">
-          <div className="section-actions">
-            <h4>Últimos pedidos</h4>
             <a className="btn btn-sm btn-outline-dark" href="/pedidos">
-              Ver todos
+              Ver pedidos
             </a>
           </div>
 
-          <div className="table-responsive">
-            <table className="table align-middle">
-              <thead>
-                <tr>
-                  <th>Cliente</th>
-                  <th>Estado</th>
-                  <th>Total</th>
-                  <th>Saldo</th>
-                </tr>
-              </thead>
-
-              <tbody>
-                {pedidos.slice(0, 5).map((p) => (
-                  <tr key={p.idPedido}>
-                    <td>{p.cliente || `Cliente #${p.idCliente}`}</td>
-                    <td>
-                      <span className="status-pill">{p.estadoPedido}</span>
-                    </td>
-                    <td>S/ {Number(p.montoTotal || 0).toFixed(2)}</td>
-                    <td>S/ {Number(p.saldoPendiente || 0).toFixed(2)}</td>
-                  </tr>
-                ))}
-
-                {!pedidos.length && (
-                  <tr>
-                    <td colSpan="4">No hay pedidos registrados.</td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
+          <div className="admin-chart-box">
+            {estadoChartData.length ? (
+              <ResponsiveContainer width="100%" height={280}>
+                <PieChart>
+                  <Pie
+                    data={estadoChartData}
+                    dataKey="value"
+                    nameKey="name"
+                    innerRadius={64}
+                    outerRadius={98}
+                    paddingAngle={4}
+                  >
+                    {estadoChartData.map((entry, index) => (
+                      <Cell key={entry.name} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                </PieChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="admin-empty-chart">
+                <i className="bi bi-pie-chart"></i>
+                <span>No hay pedidos para graficar.</span>
+              </div>
+            )}
           </div>
-        </div>
-      </div>
 
-      <div className="col-lg-5">
-        <div className="panel-card admin-priority-card">
-          <span className="badge-soft">Prioridad de hoy</span>
-          <h4>Qué debe revisar el dueño</h4>
+          <div className="admin-status-legend">
+            {estadoChartData.map((item, index) => (
+              <div key={item.name}>
+                <span style={{ background: COLORS[index % COLORS.length] }}></span>
+                <strong>{item.name}</strong>
+                <small>{item.value}</small>
+              </div>
+            ))}
+          </div>
+        </article>
 
-          <ul className="check-list">
-            <li>{pendientes} pedido(s) pendientes por confirmar</li>
-            <li>S/ {ingresosPendientes.toFixed(2)} en saldo pendiente</li>
-            <li>{stockBajo} material(es) con stock bajo</li>
-            <li>Diseños y Excel adjuntos listos para producción</li>
+        <article className="panel-card admin-chart-card">
+          <div className="section-actions">
+            <div>
+              <span className="badge-soft">Finanzas</span>
+              <h4>Pagos vs saldo pendiente</h4>
+            </div>
+
+            <a className="btn btn-sm btn-outline-dark" href="/pagos">
+              Ver pagos
+            </a>
+          </div>
+
+          <div className="admin-chart-box">
+            <ResponsiveContainer width="100%" height={280}>
+              <BarChart data={ventasChartData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(89,255,0,.14)" />
+                <XAxis dataKey="name" stroke="rgba(244,255,240,.68)" />
+                <YAxis stroke="rgba(244,255,240,.68)" />
+                <Tooltip />
+                <Bar dataKey="value" radius={[12, 12, 0, 0]} fill="#59ff00" />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </article>
+      </section>
+
+      <section className="admin-dashboard-grid secondary">
+        <article className="panel-card admin-queue-card">
+          <div className="section-actions">
+            <div>
+              <span className="badge-soft">FIFO</span>
+              <h4>Cola de trabajo</h4>
+            </div>
+
+            <a className="btn btn-sm btn-outline-dark" href="/pedidos">
+              Gestionar
+            </a>
+          </div>
+
+          <div className="admin-queue-list">
+            {colaTrabajoFIFO.slice(0, 5).map((p, index) => (
+              <a className={`admin-queue-item ${index === 0 ? 'next' : ''}`} href="/pedidos" key={p.idPedido}>
+                <span className="queue-number">{index + 1}</span>
+
+                <div>
+                  <strong>Pedido #{p.idPedido}</strong>
+                  <small>{p.cliente || `Cliente #${p.idCliente}`}</small>
+                </div>
+
+                <em>{p.estadoPedido}</em>
+              </a>
+            ))}
+
+            {!colaTrabajoFIFO.length && (
+              <div className="admin-empty-state">
+                <i className="bi bi-check2-circle"></i>
+                <strong>No hay pedidos en cola</strong>
+                <p>Cuando un cliente registre un pedido, aparecerá aquí.</p>
+              </div>
+            )}
+          </div>
+        </article>
+
+        <article className="panel-card admin-priority-card">
+          <div className="section-actions">
+            <div>
+              <span className="badge-soft">Prioridades</span>
+              <h4>Qué debe revisar el dueño</h4>
+            </div>
+          </div>
+
+          <ul className="admin-priority-list">
+            <li className={pendientes > 0 ? 'danger' : ''}>
+              <i className="bi bi-bell"></i>
+              <span>{pendientes} pedido(s) pendientes por confirmar</span>
+            </li>
+
+            <li className={ingresosPendientes > 0 ? 'warning' : ''}>
+              <i className="bi bi-wallet2"></i>
+              <span>S/ {ingresosPendientes.toFixed(2)} en saldo pendiente</span>
+            </li>
+
+            <li className={stockBajo > 0 ? 'warning' : ''}>
+              <i className="bi bi-box-seam"></i>
+              <span>{stockBajo} material(es) con stock bajo</span>
+            </li>
+
+            <li>
+              <i className="bi bi-file-earmark-spreadsheet"></i>
+              <span>Revisar diseños y Excel adjuntos antes de producción</span>
+            </li>
           </ul>
 
           {ultimoPedido && (
-            <div className="last-order-box">
+            <div className="last-order-box admin-last-order">
               <span>Último pedido registrado</span>
               <strong>#{ultimoPedido.idPedido}</strong>
               <p>{ultimoPedido.cliente || `Cliente #${ultimoPedido.idCliente}`}</p>
             </div>
           )}
-        </div>
-      </div>
-    </div>
+        </article>
+      </section>
 
-    <div className="row g-4 mt-1">
-      <div className="col-lg-6">
-        <div className="panel-card">
+      <section className="admin-dashboard-grid secondary">
+        <article className="panel-card">
           <div className="section-actions">
-            <h4>Últimos pagos</h4>
+            <div>
+              <span className="badge-soft">Pagos</span>
+              <h4>Últimos pagos registrados</h4>
+            </div>
+
             <a className="btn btn-sm btn-outline-dark" href="/pagos">
-              Ver pagos
+              Supervisar pagos
             </a>
           </div>
 
@@ -871,16 +823,21 @@ export default function Dashboard({ role, user }) {
             ))}
 
             {!ultimosPagos.length && (
-              <p className="text-muted mb-0">No hay pagos registrados.</p>
+              <div className="admin-empty-state compact">
+                <i className="bi bi-cash-coin"></i>
+                <span>No hay pagos registrados.</span>
+              </div>
             )}
           </div>
-        </div>
-      </div>
+        </article>
 
-      <div className="col-lg-6">
-        <div className="panel-card">
+        <article className="panel-card">
           <div className="section-actions">
-            <h4>Materiales con stock bajo</h4>
+            <div>
+              <span className="badge-soft">Inventario</span>
+              <h4>Materiales con stock bajo</h4>
+            </div>
+
             <a className="btn btn-sm btn-outline-dark" href="/materiales">
               Ver inventario
             </a>
@@ -899,34 +856,40 @@ export default function Dashboard({ role, user }) {
             ))}
 
             {!materialesBajos.length && (
-              <p className="text-muted mb-0">No hay materiales con stock bajo.</p>
+              <div className="admin-empty-state compact">
+                <i className="bi bi-check2-circle"></i>
+                <span>No hay materiales con stock bajo.</span>
+              </div>
             )}
           </div>
-        </div>
-      </div>
+        </article>
+      </section>
+
+      <section className="admin-shortcuts admin-control-shortcuts">
+        <a href="/pedidos">
+          <i className="bi bi-clipboard-check"></i>
+          <span>Pedidos</span>
+          <small>Cola operativa FIFO</small>
+        </a>
+
+        <a href="/pagos">
+          <i className="bi bi-cash-coin"></i>
+          <span>Pagos</span>
+          <small>Supervisión de comprobantes</small>
+        </a>
+
+        <a href="/comprobantes">
+          <i className="bi bi-receipt-cutoff"></i>
+          <span>Comprobantes</span>
+          <small>Boletas y facturas</small>
+        </a>
+
+        <a href="/materiales">
+          <i className="bi bi-box-seam"></i>
+          <span>Inventario</span>
+          <small>Stock y materiales</small>
+        </a>
+      </section>
     </div>
-
-    <div className="admin-shortcuts mt-4">
-      <a href="/pedidos">
-        <i className="bi bi-clipboard-check"></i>
-        <span>Pedidos</span>
-      </a>
-
-      <a href="/pagos">
-        <i className="bi bi-cash-coin"></i>
-        <span>Pagos</span>
-      </a>
-
-      <a href="/productos">
-        <i className="bi bi-bag-heart"></i>
-        <span>Productos</span>
-      </a>
-
-      <a href="/materiales">
-        <i className="bi bi-box-seam"></i>
-        <span>Inventario</span>
-      </a>
-    </div>
-  </div>
-);
+  );
 }
