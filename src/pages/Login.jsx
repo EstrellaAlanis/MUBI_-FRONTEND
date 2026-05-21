@@ -310,7 +310,7 @@ export default function Login({ onLogin }) {
         </p>
 
         <div className="login-benefits">
-          <div><i className="bi bi-google"></i> Google + código</div>
+          <div><i className="bi bi-google"></i> Google</div>
           <div><i className="bi bi-shield-lock"></i> Acceso seguro</div>
           <div><i className="bi bi-bag-heart"></i> Pedidos personalizados</div>
         </div>
@@ -405,12 +405,8 @@ export default function Login({ onLogin }) {
                     disabled={loading}
                   >
                     <i className="bi bi-google"></i>
-                    {loading ? 'Validando...' : 'Continuar con Google + código'}
+                    {loading ? 'Validando...' : 'Continuar con Google'}
                   </button>
-
-                  <small className="login-oauth-note">
-                    Google valida tu Gmail y MUBI envía un código adicional al mismo correo.
-                  </small>
                 </form>
               ) : (
                 <form onSubmit={verificarCodigoLogin}>
