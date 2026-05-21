@@ -5662,3 +5662,117 @@ textarea {
     width: 100%;
   }
 }
+/* ===== FIX CHECKOUT CARRITO DESALINEADO ===== */
+
+.cart-summary .checkout-data-box {
+  display: block;
+  width: 100%;
+  padding: 18px;
+  margin: 20px 0;
+  border-radius: 22px;
+  background:
+    radial-gradient(circle at 90% 0%, rgba(89, 255, 0, .12), transparent 35%),
+    rgba(255, 255, 255, .045);
+  border: 1px solid rgba(89, 255, 0, .22);
+}
+
+.cart-summary .checkout-data-box h4 {
+  width: 100%;
+  margin: 0 0 6px;
+  font-size: 24px;
+  line-height: 1.05;
+  color: #f4fff0;
+}
+
+.cart-summary .checkout-data-box small {
+  display: block;
+  width: 100%;
+  margin-bottom: 14px;
+  color: rgba(244, 255, 240, .68);
+  line-height: 1.45;
+}
+
+.cart-summary .checkout-data-box label {
+  display: block;
+  width: 100%;
+  margin: 12px 0 6px;
+  color: #f4fff0;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.cart-summary .checkout-data-box .form-control,
+.cart-summary .checkout-data-box .form-select {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  height: 48px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: rgba(7, 16, 8, .78);
+  border: 1px solid rgba(89, 255, 0, .28);
+  color: #f4fff0;
+}
+
+.cart-summary .checkout-data-box textarea.form-control {
+  height: auto;
+  min-height: 80px;
+}
+
+.cart-summary .checkout-data-box .form-control::placeholder {
+  color: rgba(244, 255, 240, .42);
+}
+
+.cart-summary .checkout-invoice-fields {
+  display: block;
+  width: 100%;
+}
+
+.cart-summary .checkout-data-box .simple-form-grid,
+.cart-summary .checkout-data-box .login-form-grid,
+.cart-summary .checkout-data-box .form-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+/* Evita que labels e inputs se acomoden horizontalmente dentro del resumen */
+.cart-summary .checkout-data-box > div {
+  width: 100%;
+}
+
+.cart-summary .checkout-data-box * {
+  box-sizing: border-box;
+}
+
+/* Botones del resumen */
+.cart-summary .btn {
+  width: 100%;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+  .cart-summary .checkout-data-box {
+    padding: 16px;
+  }
+
+  .cart-summary .checkout-data-box h4 {
+    font-size: 22px;
+  }
+}
+
+@media (max-width: 420px) {
+  .cart-summary .checkout-data-box {
+    padding: 14px;
+    border-radius: 18px;
+  }
+
+  .cart-summary .checkout-data-box h4 {
+    font-size: 20px;
+  }
+
+  .cart-summary .checkout-data-box .form-control,
+  .cart-summary .checkout-data-box .form-select {
+    height: 46px;
+  }
+}

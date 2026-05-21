@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 
 const CART_KEY = 'mubiCart';
+const CHECKOUT_DATOS_KEY = 'mubiCheckoutDatos';
 
 const getCart = () => {
   try {
@@ -16,9 +17,30 @@ const saveCart = (items) => {
   window.dispatchEvent(new Event('mubi-cart-updated'));
 };
 
+const emptyCheckoutData = {
+  telefono: '',
+  direccion: '',
+  referenciaDireccion: '',
+  tipoComprobante: 'boleta',
+  documentoIdentidad: '',
+  tipoCliente: 'persona',
+  ruc: '',
+  razonSocial: ''
+};
+
 export default function Carrito({ user }) {
   const [cart, setCart] = useState(() => getCart());
   const [message, setMessage] = useState('');
+  const [checkoutData, setCheckoutData] = useState(() => {
+    try {
+      return {
+        ...emptyCheckoutData,
+        ...(JSON.parse(localStorage.getItem(CHECKOUT_DATOS_KEY)) || {})
+      };
+    } catch {
+      return emptyCheckoutData;
+    }
+  });
 
   useEffect(() => {
     const update = () => setCart(getCart());
@@ -31,6 +53,10 @@ export default function Carrito({ user }) {
       window.removeEventListener('storage', update);
     };
   }, []);
+
+  useEffect(() => {
+    localStorage.setItem(CHECKOUT_DATOS_KEY, JSON.stringify(checkoutData));
+  }, [checkoutData]);
 
   const total = useMemo(() => {
     return cart.reduce(
@@ -65,11 +91,53 @@ export default function Carrito({ user }) {
 
     setCart([]);
     saveCart([]);
+    localStorage.removeItem(CHECKOUT_DATOS_KEY);
+    setCheckoutData(emptyCheckoutData);
+  };
+
+  const updateCheckoutData = (field, value) => {
+    setCheckoutData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  const validarCheckout = () => {
+    if (!checkoutData.telefono.trim()) {
+      return 'Ingresa un teléfono para que MUBI pueda coordinar tu pedido.';
+    }
+
+    if (!checkoutData.direccion.trim()) {
+      return 'Ingresa una dirección de entrega o referencia principal.';
+    }
+
+    if (checkoutData.tipoComprobante === 'boleta' && !checkoutData.documentoIdentidad.trim()) {
+      return 'Ingresa tu DNI para preparar la boleta.';
+    }
+
+    if (checkoutData.tipoComprobante === 'factura') {
+      if (!checkoutData.ruc.trim() || checkoutData.ruc.trim().length !== 11) {
+        return 'Para factura, ingresa un RUC válido de 11 dígitos.';
+      }
+
+      if (!checkoutData.razonSocial.trim()) {
+        return 'Para factura, ingresa la razón social.';
+      }
+    }
+
+    return '';
   };
 
   const confirmarCompra = () => {
     if (!cart.length) {
       setMessage('Agrega al menos un producto para continuar.');
+      return;
+    }
+
+    const checkoutError = validarCheckout();
+
+    if (checkoutError) {
+      setMessage(checkoutError);
       return;
     }
 
@@ -84,12 +152,23 @@ export default function Carrito({ user }) {
       return `${item.cantidad} x ${item.nombre}. Color: ${item.color}. Talla base: ${item.talla}. Detalle: ${filas}`;
     }).join('\n');
 
+    const datosEntrega = [
+      `Teléfono: ${checkoutData.telefono}`,
+      `Dirección: ${checkoutData.direccion}`,
+      checkoutData.referenciaDireccion ? `Referencia: ${checkoutData.referenciaDireccion}` : '',
+      `Comprobante: ${checkoutData.tipoComprobante}`,
+      checkoutData.tipoComprobante === 'boleta' ? `DNI: ${checkoutData.documentoIdentidad}` : '',
+      checkoutData.tipoComprobante === 'factura' ? `RUC: ${checkoutData.ruc}` : '',
+      checkoutData.tipoComprobante === 'factura' ? `Razón social: ${checkoutData.razonSocial}` : ''
+    ].filter(Boolean).join('\n');
+
     localStorage.setItem(
       'ideaPedidoMubi',
-      `Pedido desde carrito:\n${resumen}\nTotal estimado: S/ ${total.toFixed(2)}`
+      `Pedido desde carrito:\n${resumen}\n\nDatos de entrega y comprobante:\n${datosEntrega}\n\nTotal estimado: S/ ${total.toFixed(2)}`
     );
 
     localStorage.setItem('mubiCheckoutPendiente', JSON.stringify(cart));
+    localStorage.setItem('mubiCheckoutDatos', JSON.stringify(checkoutData));
 
     if (!user) {
       localStorage.setItem('redirectAfterLogin', '/pedido-personalizado');
@@ -227,6 +306,75 @@ export default function Carrito({ user }) {
               El total puede ajustarse si el diseño requiere detalles adicionales.
               El administrador confirmará el monto final.
             </p>
+
+            <div className="checkout-data-box">
+              <h4>Datos para finalizar</h4>
+              <small>Estos datos se piden al final, no al crear la cuenta.</small>
+
+              <label>Teléfono</label>
+              <input
+                className="form-control"
+                value={checkoutData.telefono}
+                onChange={e => updateCheckoutData('telefono', e.target.value.replace(/\D/g, '').slice(0, 9))}
+                placeholder="Ejemplo: 985632147"
+              />
+
+              <label>Dirección de entrega</label>
+              <input
+                className="form-control"
+                value={checkoutData.direccion}
+                onChange={e => updateCheckoutData('direccion', e.target.value)}
+                placeholder="Dirección o zona de entrega"
+              />
+
+              <label>Referencia</label>
+              <input
+                className="form-control"
+                value={checkoutData.referenciaDireccion}
+                onChange={e => updateCheckoutData('referenciaDireccion', e.target.value)}
+                placeholder="Frente al parque, casa verde..."
+              />
+
+              <label>Comprobante</label>
+              <select
+                className="form-select"
+                value={checkoutData.tipoComprobante}
+                onChange={e => updateCheckoutData('tipoComprobante', e.target.value)}
+              >
+                <option value="boleta">Boleta</option>
+                <option value="factura">Factura</option>
+              </select>
+
+              {checkoutData.tipoComprobante === 'boleta' ? (
+                <>
+                  <label>DNI para boleta</label>
+                  <input
+                    className="form-control"
+                    value={checkoutData.documentoIdentidad}
+                    onChange={e => updateCheckoutData('documentoIdentidad', e.target.value.replace(/\D/g, '').slice(0, 8))}
+                    placeholder="8 dígitos"
+                  />
+                </>
+              ) : (
+                <div className="checkout-invoice-fields">
+                  <label>RUC</label>
+                  <input
+                    className="form-control"
+                    value={checkoutData.ruc}
+                    onChange={e => updateCheckoutData('ruc', e.target.value.replace(/\D/g, '').slice(0, 11))}
+                    placeholder="11 dígitos"
+                  />
+
+                  <label>Razón social</label>
+                  <input
+                    className="form-control"
+                    value={checkoutData.razonSocial}
+                    onChange={e => updateCheckoutData('razonSocial', e.target.value)}
+                    placeholder="Nombre legal de la empresa"
+                  />
+                </div>
+              )}
+            </div>
 
             <button className="btn btn-primary w-100" type="button" onClick={confirmarCompra}>
               {user ? 'Confirmar pedido' : 'Continuar e iniciar sesión'}

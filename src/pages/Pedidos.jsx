@@ -45,6 +45,7 @@ const [excelConfirmado, setExcelConfirmado] = useState(false);
   const [error, setError] = useState('');
   const [pedidoSeleccionado, setPedidoSeleccionado] = useState(null);
   const [checkoutPendiente, setCheckoutPendiente] = useState([]);
+  const [checkoutDatos, setCheckoutDatos] = useState(null);
 
   const load = async () => {
     const [pedidosData, clientesData, productosData, comprobantesData] = await Promise.all([
@@ -81,16 +82,63 @@ const [excelConfirmado, setExcelConfirmado] = useState(false);
   }).join('\n');
 };
 
+const crearResumenDatosCheckout = (datos) => {
+  if (!datos) return '';
+
+  return [
+    'Datos de entrega y comprobante:',
+    datos.telefono ? `Teléfono: ${datos.telefono}` : '',
+    datos.direccion ? `Dirección: ${datos.direccion}` : '',
+    datos.referenciaDireccion ? `Referencia: ${datos.referenciaDireccion}` : '',
+    datos.tipoComprobante ? `Comprobante solicitado: ${datos.tipoComprobante}` : '',
+    datos.tipoComprobante === 'boleta' && datos.documentoIdentidad ? `DNI: ${datos.documentoIdentidad}` : '',
+    datos.tipoComprobante === 'factura' && datos.ruc ? `RUC: ${datos.ruc}` : '',
+    datos.tipoComprobante === 'factura' && datos.razonSocial ? `Razón social: ${datos.razonSocial}` : ''
+  ].filter(Boolean).join('\n');
+};
+
+const actualizarDatosClienteCheckout = async () => {
+  if (!isCliente || !clienteActual || !checkoutDatos) return;
+
+  const payload = {
+    nombres: clienteActual.nombres || user?.nombre || '',
+    apellidos: clienteActual.apellidos || user?.apellido || '',
+    correo: clienteActual.correo || user?.correo || '',
+    telefono: checkoutDatos.telefono || clienteActual.telefono || '',
+    direccion: checkoutDatos.direccion || clienteActual.direccion || '',
+    referenciaDireccion: checkoutDatos.referenciaDireccion || clienteActual.referenciaDireccion || '',
+    documentoIdentidad: checkoutDatos.documentoIdentidad || clienteActual.documentoIdentidad || '',
+    tipoCliente: checkoutDatos.tipoComprobante === 'factura' ? 'empresa' : 'persona',
+    ruc: checkoutDatos.tipoComprobante === 'factura' ? checkoutDatos.ruc : (clienteActual.ruc || ''),
+    razonSocial: checkoutDatos.tipoComprobante === 'factura' ? checkoutDatos.razonSocial : (clienteActual.razonSocial || '')
+  };
+
+  await api.put(`${endpoints.clientes}/${clienteActual.idCliente}`, payload);
+};
+
+
   useEffect(() => {
   const ideaGuardada = localStorage.getItem('ideaPedidoMubi');
   const checkoutGuardado = localStorage.getItem('mubiCheckoutPendiente');
+  const checkoutDatosGuardados = localStorage.getItem('mubiCheckoutDatos');
 
   let checkoutItems = [];
+  let datosCheckout = null;
 
   try {
     checkoutItems = checkoutGuardado ? JSON.parse(checkoutGuardado) : [];
   } catch {
     checkoutItems = [];
+  }
+
+  try {
+    datosCheckout = checkoutDatosGuardados ? JSON.parse(checkoutDatosGuardados) : null;
+  } catch {
+    datosCheckout = null;
+  }
+
+  if (datosCheckout) {
+    setCheckoutDatos(datosCheckout);
   }
 
   if (checkoutItems.length) {
@@ -131,6 +179,8 @@ const [excelConfirmado, setExcelConfirmado] = useState(false);
   const total = checkoutPendiente.length
     ? checkoutTotal
     : Number(selectedProduct?.precio || 0) * Number(form.cantidad || 0);
+
+  const checkoutDatosTexto = crearResumenDatosCheckout(checkoutDatos);
   const pedidosPendientes = pedidos.filter(
     p => String(p.estadoPedido).toLowerCase() === 'pendiente'
   ).length;
@@ -255,6 +305,14 @@ const limpiarExcel = () => {
         throw new Error('No se encontró tu registro de cliente. Verifica que tu correo esté registrado como cliente.');
       }
 
+      if (isCliente && checkoutDatos) {
+        await actualizarDatosClienteCheckout();
+      }
+
+      const observacionesPedido = [form.descripcionDiseno, checkoutDatosTexto]
+        .filter(Boolean)
+        .join('\n\n');
+
       const rutaFrente = await subirImagen(archivoFrente);
       const rutaEspalda = await subirImagen(archivoEspalda);
       const rutaExcelTallas = await subirExcel(archivoExcel);
@@ -268,7 +326,7 @@ const limpiarExcel = () => {
       const payload = {
         idCliente: Number(isCliente ? clienteActual.idCliente : form.idCliente),
         estadoPedido: 'pendiente',
-        observaciones: form.descripcionDiseno,
+        observaciones: observacionesPedido,
         rutaExcelTallas: rutaExcelTallas,
         detalles: checkoutPendiente.length
           ? checkoutPendiente.map(item => ({
@@ -277,7 +335,7 @@ const limpiarExcel = () => {
               color: item.color || 'Negro',
               cantidad: Number(item.cantidad || 1),
               precioUnitario: Number(item.precio || 0),
-              descripcionDiseno: `Tipo: ${form.tipoDiseno}. Ubicación: ${form.ubicacionDiseno}. Detalle: ${form.descripcionDiseno}. Archivos: ${archivos || 'Sin archivos adjuntos'}`,
+              descripcionDiseno: `Tipo: ${form.tipoDiseno}. Ubicación: ${form.ubicacionDiseno}. Detalle: ${observacionesPedido}. Archivos: ${archivos || 'Sin archivos adjuntos'}`,
               disenoPersonalizado: item.personalizados?.length
                 ? item.personalizados
                     .filter(row => row.talla || row.nombre || row.numero)
@@ -294,7 +352,7 @@ const limpiarExcel = () => {
                 color: form.color,
                 cantidad: Number(form.cantidad),
                 precioUnitario: Number(selectedProduct?.precio || 0),
-                descripcionDiseno: `Tipo: ${form.tipoDiseno}. Ubicación: ${form.ubicacionDiseno}. Detalle: ${form.descripcionDiseno}. Archivos: ${archivos || 'Sin archivos adjuntos'}`,
+                descripcionDiseno: `Tipo: ${form.tipoDiseno}. Ubicación: ${form.ubicacionDiseno}. Detalle: ${observacionesPedido}. Archivos: ${archivos || 'Sin archivos adjuntos'}`,
                 disenoPersonalizado: archivos || (form.descripcionDiseno ? 'Diseño descrito por cliente' : 'Sin diseño'),
                 rutaDisenoFrontal: rutaFrente,
                 rutaDisenoPosterior: rutaEspalda
@@ -322,6 +380,7 @@ const limpiarExcel = () => {
       localStorage.removeItem('ideaPedidoMubi');
       localStorage.removeItem('mubiCart');
       localStorage.removeItem('mubiCheckoutPendiente');
+      localStorage.removeItem('mubiCheckoutDatos');
       window.dispatchEvent(new Event('mubi-cart-updated'));
       setCheckoutPendiente([]);
       await load();
@@ -526,6 +585,25 @@ const imprimirComprobante = (comprobante) => {
             <span>
               Se cargaron {checkoutPendiente.length} producto(s) con un total estimado de S/ {checkoutTotal.toFixed(2)}.
             </span>
+          </div>
+        </div>
+      )}
+
+      {modoCliente && checkoutDatos && (
+        <div className="checkout-confirm-data-box">
+          <i className="bi bi-truck"></i>
+          <div>
+            <strong>Datos de entrega y comprobante recibidos</strong>
+            <span>{checkoutDatos.telefono} · {checkoutDatos.direccion}</span>
+            <small>
+              Comprobante: {checkoutDatos.tipoComprobante}
+              {checkoutDatos.tipoComprobante === 'boleta' && checkoutDatos.documentoIdentidad
+                ? ` · DNI: ${checkoutDatos.documentoIdentidad}`
+                : ''}
+              {checkoutDatos.tipoComprobante === 'factura' && checkoutDatos.ruc
+                ? ` · RUC: ${checkoutDatos.ruc}`
+                : ''}
+            </small>
           </div>
         </div>
       )}
