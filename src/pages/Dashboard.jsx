@@ -160,13 +160,36 @@ export default function Dashboard({ role, user }) {
     window.location.href = user ? '/pedido-personalizado' : '/login';
   };
 
-  const pedirProducto = (p) => {
-    localStorage.setItem(
-      'ideaPedidoMubi',
-      `Deseo pedir el producto "${p.nombre}" de la categoría ${p.categoria || 'MUBI'}.`
-    );
-    window.location.href = user ? '/pedido-personalizado' : '/login';
+const pedirProducto = (p) => {
+  const item = {
+    cartId: `${p.idProducto}-${Date.now()}`,
+    idProducto: p.idProducto,
+    nombre: p.nombre,
+    descripcion: p.descripcion || 'Producto personalizable según tu diseño.',
+    categoria: p.categoria || 'MUBI',
+    precio: Number(p.precio || 0),
+    imagen: p.rutaImagenPrincipal
+      ? `http://localhost:5071${p.rutaImagenPrincipal}`
+      : '',
+    talla: 'M',
+    color: 'Negro',
+    cantidad: 1,
+    personalizados: []
   };
+
+  const cart = JSON.parse(localStorage.getItem('mubiCart') || '[]');
+  const nextCart = [...cart, item];
+
+  localStorage.setItem('mubiCart', JSON.stringify(nextCart));
+  window.dispatchEvent(new Event('mubi-cart-updated'));
+
+  localStorage.setItem(
+    'ideaPedidoMubi',
+    `Deseo pedir el producto "${p.nombre}" de la categoría ${p.categoria || 'MUBI'}.`
+  );
+
+  window.location.href = '/carrito';
+};
   const imagenProducto = (p) => {
       return p.rutaImagenPrincipal ? `http://localhost:5071${p.rutaImagenPrincipal}` : '';
     };

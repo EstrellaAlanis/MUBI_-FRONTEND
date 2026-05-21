@@ -377,7 +377,7 @@ export default function Carrito({ user }) {
             </div>
 
             <button className="btn btn-primary w-100" type="button" onClick={confirmarCompra}>
-              {user ? 'Confirmar pedido' : 'Continuar e iniciar sesión'}
+              {user ? 'Confirmar pedido' : 'Continuar'}
             </button>
 
             <button className="btn btn-outline-dark w-100 mt-2" type="button" onClick={limpiarCarrito}>
