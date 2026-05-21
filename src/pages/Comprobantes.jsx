@@ -2,20 +2,20 @@ import { useEffect, useMemo, useState } from 'react';
 import PageHeader from '../components/PageHeader.jsx';
 import { api, endpoints } from '../services/api.js';
 
-const emptyForm = {
-  tipoComprobante: 'boleta',
-  idPedido: '',
-  observacion: ''
-};
-
 export default function Comprobantes({ role }) {
   const [comprobantes, setComprobantes] = useState([]);
   const [pedidos, setPedidos] = useState([]);
   const [clientes, setClientes] = useState([]);
-  const [form, setForm] = useState(emptyForm);
+
+  const [selectedComprobante, setSelectedComprobante] = useState(null);
+  const [selectedPedido, setSelectedPedido] = useState(null);
+  const [tipoComprobante, setTipoComprobante] = useState('boleta');
+  const [observacion, setObservacion] = useState('');
+
+  const [search, setSearch] = useState('');
+  const [filterTipo, setFilterTipo] = useState('todos');
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
-  const [selectedComprobante, setSelectedComprobante] = useState(null);
 
   const load = async () => {
     const [comprobantesData, pedidosData, clientesData] = await Promise.all([
@@ -24,92 +24,107 @@ export default function Comprobantes({ role }) {
       api.get(endpoints.clientes)
     ]);
 
-    const comprobantesList = Array.isArray(comprobantesData) ? comprobantesData : [];
-    const pedidosList = Array.isArray(pedidosData) ? pedidosData : [];
-    const clientesList = Array.isArray(clientesData) ? clientesData : [];
-
-    setComprobantes(comprobantesList);
-    setPedidos(pedidosList);
-    setClientes(clientesList);
-
-    const pedidosDisponibles = getPedidosDisponibles(pedidosList, comprobantesList);
-
-    setForm(prev => ({
-      ...prev,
-      idPedido: prev.idPedido || pedidosDisponibles[0]?.idPedido || ''
-    }));
+    setComprobantes(Array.isArray(comprobantesData) ? comprobantesData : []);
+    setPedidos(Array.isArray(pedidosData) ? pedidosData : []);
+    setClientes(Array.isArray(clientesData) ? clientesData : []);
   };
 
   useEffect(() => {
     load().catch(err => setError(err.message));
   }, []);
 
-  const getPedidosDisponibles = (pedidosList = pedidos, comprobantesList = comprobantes) => {
-    const pedidosConComprobante = comprobantesList
-      .filter(c => String(c.estado).toLowerCase() === 'emitido')
-      .map(c => Number(c.idPedido));
+  const comprobantesEmitidos = comprobantes.filter(
+    c => String(c.estado || '').toLowerCase() === 'emitido'
+  );
 
-    return pedidosList.filter(p => {
+  const comprobantesAnulados = comprobantes.filter(
+    c => String(c.estado || '').toLowerCase() === 'anulado'
+  );
+
+  const totalEmitido = useMemo(() => {
+    return comprobantesEmitidos.reduce((acc, c) => acc + Number(c.total || 0), 0);
+  }, [comprobantes]);
+
+  const pedidosDisponibles = useMemo(() => {
+    const pedidosConComprobante = comprobantesEmitidos.map(c => Number(c.idPedido));
+
+    return pedidos.filter(p => {
       const estado = String(p.estadoPedido || '').toLowerCase();
       const saldo = Number(p.saldoPendiente || 0);
       const yaTieneComprobante = pedidosConComprobante.includes(Number(p.idPedido));
 
       return !yaTieneComprobante && (estado === 'pagado' || saldo === 0);
     });
+  }, [pedidos, comprobantes]);
+
+  const comprobantesFiltrados = useMemo(() => {
+    return comprobantes.filter(c => {
+      const texto = `${c.numeroCompleto || ''} ${c.cliente || ''} ${c.tipoComprobante || ''} ${c.estado || ''} ${c.total || ''}`.toLowerCase();
+      const matchSearch = texto.includes(search.toLowerCase());
+      const matchTipo = filterTipo === 'todos' || String(c.tipoComprobante || '').toLowerCase() === filterTipo;
+
+      return matchSearch && matchTipo;
+    });
+  }, [comprobantes, search, filterTipo]);
+
+  const getClientePedido = (pedido) => {
+    return clientes.find(c => Number(c.idCliente) === Number(pedido?.idCliente));
   };
 
-  const pedidosDisponibles = getPedidosDisponibles();
+  const clienteTexto = (c) => {
+    if (!c) return 'Cliente no identificado';
 
-  const pedidoSeleccionado = pedidos.find(
-    p => Number(p.idPedido) === Number(form.idPedido)
-  );
+    if (String(c.tipoCliente || '').toLowerCase() === 'empresa' && c.razonSocial) {
+      return c.razonSocial;
+    }
 
-  const clientePedido = clientes.find(
-    c => Number(c.idCliente) === Number(pedidoSeleccionado?.idCliente)
-  );
+    return c.cliente || `${c.nombres || ''} ${c.apellidos || ''}`.trim() || 'Cliente no identificado';
+  };
 
-  const totalEmitido = useMemo(() => {
-    return comprobantes
-      .filter(c => String(c.estado).toLowerCase() === 'emitido')
-      .reduce((acc, c) => acc + Number(c.total || 0), 0);
-  }, [comprobantes]);
+  const abrirEmision = (pedido) => {
+    setSelectedPedido(pedido);
 
-  const comprobantesEmitidos = comprobantes.filter(
-    c => String(c.estado).toLowerCase() === 'emitido'
-  ).length;
+    const cliente = getClientePedido(pedido);
+    const esEmpresa = String(cliente?.tipoCliente || '').toLowerCase() === 'empresa';
 
-  const comprobantesAnulados = comprobantes.filter(
-    c => String(c.estado).toLowerCase() === 'anulado'
-  ).length;
+    setTipoComprobante(esEmpresa ? 'factura' : 'boleta');
+    setObservacion(`Comprobante generado desde pedido #${pedido.idPedido}.`);
+    setError('');
+    setMessage('');
+  };
 
-  const submit = async (e) => {
+  const emitirComprobante = async (e) => {
     e.preventDefault();
     setError('');
     setMessage('');
 
     try {
-      if (!form.idPedido) {
-        throw new Error('Selecciona un pedido pagado para generar comprobante.');
+      if (!selectedPedido) {
+        throw new Error('Selecciona un pedido pagado.');
       }
 
-      if (form.tipoComprobante === 'factura') {
-        if (!clientePedido || String(clientePedido.tipoCliente).toLowerCase() !== 'empresa') {
+      const cliente = getClientePedido(selectedPedido);
+
+      if (tipoComprobante === 'factura') {
+        if (!cliente || String(cliente.tipoCliente || '').toLowerCase() !== 'empresa') {
           throw new Error('Solo puedes emitir factura a clientes tipo empresa.');
         }
 
-        if (!clientePedido.ruc || !clientePedido.razonSocial) {
+        if (!cliente.ruc || !cliente.razonSocial) {
           throw new Error('El cliente empresa debe tener RUC y razón social.');
         }
       }
 
       await api.post(endpoints.comprobantes, {
-        tipoComprobante: form.tipoComprobante,
-        idPedido: Number(form.idPedido),
-        observacion: form.observacion
+        tipoComprobante,
+        idPedido: Number(selectedPedido.idPedido),
+        observacion
       });
 
-      setMessage('Comprobante generado correctamente.');
-      setForm({ ...emptyForm });
+      setMessage('Comprobante emitido correctamente.');
+      setSelectedPedido(null);
+      setTipoComprobante('boleta');
+      setObservacion('');
       await load();
     } catch (err) {
       setError(err.message);
@@ -136,12 +151,100 @@ export default function Comprobantes({ role }) {
     }, 300);
   };
 
-  const clienteTexto = (c) => {
-    if (String(c.tipoCliente).toLowerCase() === 'empresa' && c.razonSocial) {
-      return c.razonSocial;
-    }
+  const ModalEmision = () => {
+    if (!selectedPedido) return null;
 
-    return c.cliente || 'Cliente no identificado';
+    const cliente = getClientePedido(selectedPedido);
+    const esEmpresa = String(cliente?.tipoCliente || '').toLowerCase() === 'empresa';
+
+    return (
+      <div className="modal-backdrop-custom">
+        <div className="pedido-modal admin-management-modal">
+          <div className="pedido-modal-header">
+            <div>
+              <span className="badge-soft">Emitir comprobante</span>
+              <h3>Pedido #{selectedPedido.idPedido}</h3>
+              <p>{selectedPedido.cliente || clienteTexto(cliente)}</p>
+            </div>
+
+            <button
+              className="btn btn-sm btn-outline-danger"
+              type="button"
+              onClick={() => setSelectedPedido(null)}
+            >
+              Cerrar
+            </button>
+          </div>
+
+          <form onSubmit={emitirComprobante}>
+            <div className="admin-detail-grid">
+              <div>
+                <strong>Total pedido</strong>
+                <p>S/ {Number(selectedPedido.montoTotal || 0).toFixed(2)}</p>
+              </div>
+
+              <div>
+                <strong>Saldo pendiente</strong>
+                <p>S/ {Number(selectedPedido.saldoPendiente || 0).toFixed(2)}</p>
+              </div>
+
+              <div>
+                <strong>Cliente</strong>
+                <p>{clienteTexto(cliente)}</p>
+              </div>
+
+              <div>
+                <strong>Documento</strong>
+                <p>
+                  {esEmpresa
+                    ? `RUC: ${cliente?.ruc || 'No registrado'}`
+                    : `DNI: ${cliente?.documentoIdentidad || 'No registrado'}`}
+                </p>
+              </div>
+            </div>
+
+            <label>Tipo de comprobante</label>
+            <select
+              className="form-select"
+              value={tipoComprobante}
+              onChange={e => setTipoComprobante(e.target.value)}
+            >
+              <option value="boleta">Boleta</option>
+              <option value="factura">Factura</option>
+            </select>
+
+            {tipoComprobante === 'factura' && !esEmpresa && (
+              <div className="alert alert-warning mt-3">
+                Para emitir factura, el cliente debe estar registrado como empresa con RUC y razón social.
+              </div>
+            )}
+
+            <label>Observación</label>
+            <textarea
+              className="form-control"
+              rows="3"
+              value={observacion}
+              onChange={e => setObservacion(e.target.value)}
+              placeholder="Ejemplo: comprobante generado por pago total."
+            ></textarea>
+
+            <div className="admin-action-grid mt-3">
+              <button className="btn btn-primary" type="submit">
+                <i className="bi bi-receipt-cutoff"></i> Emitir comprobante
+              </button>
+
+              <button
+                className="btn btn-outline-dark"
+                type="button"
+                onClick={() => setSelectedPedido(null)}
+              >
+                Cancelar
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    );
   };
 
   const ModalComprobante = () => {
@@ -246,23 +349,23 @@ export default function Comprobantes({ role }) {
       <div className="panel-card no-access-card fade-in">
         <span className="badge-soft">Acceso restringido</span>
         <h2>Solo el administrador puede generar comprobantes</h2>
-        <p>Los clientes podrán visualizar sus comprobantes más adelante desde sus pedidos o pagos.</p>
+        <p>Los clientes podrán visualizar sus comprobantes desde sus pedidos o pagos.</p>
       </div>
     );
   }
 
   return (
-    <div className="fade-in comprobantes-page">
+    <div className="fade-in comprobantes-page admin-management-page">
       <PageHeader
         icon="bi-receipt-cutoff"
         title="Boletas y facturas"
-        subtitle="Genera comprobantes internos desde pedidos pagados y consulta el historial de ventas."
+        subtitle="Vista de emisión y seguimiento de comprobantes generados desde pedidos pagados."
       />
 
       {error && <div className="alert alert-danger">{error}</div>}
       {message && <div className="alert alert-success">{message}</div>}
 
-      <div className="stats-grid compact">
+      <div className="admin-stats-grid">
         <article className="report-card">
           <span>Total emitido</span>
           <strong>S/ {totalEmitido.toFixed(2)}</strong>
@@ -270,194 +373,181 @@ export default function Comprobantes({ role }) {
         </article>
 
         <article className="report-card">
+          <span>Por emitir</span>
+          <strong>{pedidosDisponibles.length}</strong>
+          <p>Pedidos pagados sin comprobante.</p>
+        </article>
+
+        <article className="report-card">
           <span>Emitidos</span>
-          <strong>{comprobantesEmitidos}</strong>
+          <strong>{comprobantesEmitidos.length}</strong>
           <p>Boletas y facturas vigentes.</p>
         </article>
 
         <article className="report-card">
           <span>Anulados</span>
-          <strong>{comprobantesAnulados}</strong>
+          <strong>{comprobantesAnulados.length}</strong>
           <p>Comprobantes anulados.</p>
         </article>
       </div>
 
-      <div className="row g-4">
-        <div className="col-lg-4">
-          <form className="panel-card form-card" onSubmit={submit}>
-            <h4>Generar comprobante</h4>
+      <div className="panel-card invoice-queue-panel">
+        <div className="admin-list-header">
+          <div>
+            <h4>Pedidos listos para comprobante</h4>
+            <p>Emite boleta o factura solo desde pedidos pagados o con saldo cero.</p>
+          </div>
 
-            <label>Tipo de comprobante</label>
-            <select
-              className="form-select"
-              value={form.tipoComprobante}
-              onChange={e => setForm({ ...form, tipoComprobante: e.target.value })}
-            >
-              <option value="boleta">Boleta</option>
-              <option value="factura">Factura</option>
-            </select>
-
-            <label>Pedido pagado</label>
-            <select
-              className="form-select"
-              value={form.idPedido}
-              onChange={e => setForm({ ...form, idPedido: e.target.value })}
-              required
-            >
-              <option value="">Seleccionar pedido</option>
-              {pedidosDisponibles.map(p => (
-                <option key={p.idPedido} value={p.idPedido}>
-                  #{p.idPedido} - {p.cliente} - S/ {Number(p.montoTotal || 0).toFixed(2)}
-                </option>
-              ))}
-            </select>
-
-            {!pedidosDisponibles.length && (
-              <small className="helper-text">
-                No hay pedidos pagados disponibles o todos ya tienen comprobante.
-              </small>
-            )}
-
-            {pedidoSeleccionado && (
-              <div className="payment-order-summary">
-                <div>
-                  <span>Cliente</span>
-                  <strong>{pedidoSeleccionado.cliente}</strong>
-                </div>
-
-                <div>
-                  <span>Total pedido</span>
-                  <strong>S/ {Number(pedidoSeleccionado.montoTotal || 0).toFixed(2)}</strong>
-                </div>
-
-                <div>
-                  <span>Estado</span>
-                  <strong>{pedidoSeleccionado.estadoPedido}</strong>
-                </div>
-              </div>
-            )}
-
-            {clientePedido && (
-              <div className="payment-client-info mt-3">
-                <span className="badge-soft">
-                  {clientePedido.tipoCliente === 'empresa' ? 'Cliente empresa' : 'Persona natural'}
-                </span>
-
-                <p className="mt-2">
-                  {clientePedido.tipoCliente === 'empresa'
-                    ? `${clientePedido.razonSocial || 'Sin razón social'} | RUC: ${clientePedido.ruc || 'Sin RUC'}`
-                    : `DNI: ${clientePedido.documentoIdentidad || 'No registrado'}`}
-                </p>
-              </div>
-            )}
-
-            <label>Observación</label>
-            <textarea
-              className="form-control"
-              rows="3"
-              value={form.observacion}
-              onChange={e => setForm({ ...form, observacion: e.target.value })}
-              placeholder="Ejemplo: Comprobante generado por pago total."
-            ></textarea>
-
-            <button
-              className="btn btn-primary w-100 mt-3"
-              type="submit"
-              disabled={!pedidosDisponibles.length}
-            >
-              <i className="bi bi-receipt"></i> Generar comprobante
-            </button>
-          </form>
+          <button className="btn btn-outline-dark" type="button" onClick={load}>
+            <i className="bi bi-arrow-clockwise"></i> Actualizar
+          </button>
         </div>
 
-        <div className="col-lg-8">
-          <div className="panel-card">
-            <div className="section-actions">
-              <h4>Historial de comprobantes</h4>
+        {pedidosDisponibles.length ? (
+          <div className="invoice-queue-grid">
+            {pedidosDisponibles.map(p => {
+              const cliente = getClientePedido(p);
+              const esEmpresa = String(cliente?.tipoCliente || '').toLowerCase() === 'empresa';
 
-              <button className="btn btn-outline-dark" type="button" onClick={load}>
-                Actualizar
-              </button>
-            </div>
+              return (
+                <article className="invoice-queue-card" key={p.idPedido}>
+                  <span className="badge-soft">Pedido #{p.idPedido}</span>
+                  <h4>{p.cliente || clienteTexto(cliente)}</h4>
+                  <p>
+                    Total S/ {Number(p.montoTotal || 0).toFixed(2)} ·
+                    saldo S/ {Number(p.saldoPendiente || 0).toFixed(2)}
+                  </p>
 
-            <div className="table-responsive">
-              <table className="table align-middle">
-                <thead>
-                  <tr>
-                    <th>Número</th>
-                    <th>Cliente</th>
-                    <th>Tipo</th>
-                    <th>Total</th>
-                    <th>Estado</th>
-                    <th>Fecha</th>
-                    <th>Acciones</th>
-                  </tr>
-                </thead>
+                  <small>
+                    {esEmpresa
+                      ? `Factura disponible · RUC ${cliente?.ruc || 'no registrado'}`
+                      : `Boleta sugerida · DNI ${cliente?.documentoIdentidad || 'no registrado'}`}
+                  </small>
 
-                <tbody>
-                  {comprobantes.map(c => (
-                    <tr key={c.idComprobante}>
-                      <td>
-                        <strong>{c.numeroCompleto}</strong>
-                        <small className="d-block text-muted">Pedido #{c.idPedido}</small>
-                      </td>
-
-                      <td>{clienteTexto(c)}</td>
-                      <td>{c.tipoComprobante}</td>
-                      <td>S/ {Number(c.total || 0).toFixed(2)}</td>
-
-                      <td>
-                        <span className={`status-pill status-${String(c.estado).toLowerCase()}`}>
-                          {c.estado}
-                        </span>
-                      </td>
-
-                      <td>{new Date(c.fechaEmision).toLocaleDateString()}</td>
-
-                      <td>
-                        <div className="table-actions">
-                          <button
-                            className="btn btn-sm btn-outline-dark"
-                            type="button"
-                            onClick={() => setSelectedComprobante(c)}
-                          >
-                            Ver
-                          </button>
-
-                          <button
-                            className="btn btn-sm btn-outline-dark"
-                            type="button"
-                            onClick={() => imprimir(c)}
-                          >
-                            Imprimir
-                          </button>
-
-                          {String(c.estado).toLowerCase() !== 'anulado' && (
-                            <button
-                              className="btn btn-sm btn-outline-danger"
-                              type="button"
-                              onClick={() => anular(c.idComprobante)}
-                            >
-                              Anular
-                            </button>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-
-                  {!comprobantes.length && (
-                    <tr>
-                      <td colSpan="7">No hay comprobantes registrados.</td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
+                  <button
+                    className="btn btn-primary w-100 mt-3"
+                    type="button"
+                    onClick={() => abrirEmision(p)}
+                  >
+                    Emitir comprobante
+                  </button>
+                </article>
+              );
+            })}
           </div>
+        ) : (
+          <div className="fifo-empty">
+            <i className="bi bi-check2-circle"></i>
+            <strong>No hay comprobantes pendientes</strong>
+            <span>Cuando un pedido esté pagado, aparecerá aquí para emitir boleta o factura.</span>
+          </div>
+        )}
+      </div>
+
+      <div className="panel-card admin-list-panel mt-4">
+        <div className="admin-list-header">
+          <div>
+            <h4>Historial de comprobantes</h4>
+            <p>Consulta, imprime o anula comprobantes ya emitidos.</p>
+          </div>
+        </div>
+
+        <div className="admin-toolbar">
+          <input
+            className="form-control"
+            placeholder="Buscar por número, cliente, tipo, estado o total..."
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+          />
+
+          <select
+            className="form-select"
+            value={filterTipo}
+            onChange={e => setFilterTipo(e.target.value)}
+          >
+            <option value="todos">Todos los tipos</option>
+            <option value="boleta">Boletas</option>
+            <option value="factura">Facturas</option>
+          </select>
+        </div>
+
+        <div className="table-responsive admin-dark-table-wrap">
+          <table className="table align-middle admin-dark-table">
+            <thead>
+              <tr>
+                <th>Número</th>
+                <th>Cliente</th>
+                <th>Tipo</th>
+                <th>Total</th>
+                <th>Estado</th>
+                <th>Fecha</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {comprobantesFiltrados.map(c => (
+                <tr key={c.idComprobante}>
+                  <td>
+                    <strong>{c.numeroCompleto}</strong>
+                    <small>Pedido #{c.idPedido}</small>
+                  </td>
+
+                  <td>{clienteTexto(c)}</td>
+                  <td>{c.tipoComprobante}</td>
+                  <td>S/ {Number(c.total || 0).toFixed(2)}</td>
+
+                  <td>
+                    <span className={`status-pill status-${String(c.estado).toLowerCase()}`}>
+                      {c.estado}
+                    </span>
+                  </td>
+
+                  <td>{new Date(c.fechaEmision).toLocaleDateString()}</td>
+
+                  <td>
+                    <div className="table-actions">
+                      <button
+                        className="btn btn-sm btn-outline-dark"
+                        type="button"
+                        onClick={() => setSelectedComprobante(c)}
+                      >
+                        Ver
+                      </button>
+
+                      <button
+                        className="btn btn-sm btn-outline-dark"
+                        type="button"
+                        onClick={() => imprimir(c)}
+                      >
+                        Imprimir
+                      </button>
+
+                      {String(c.estado).toLowerCase() !== 'anulado' && (
+                        <button
+                          className="btn btn-sm btn-outline-danger"
+                          type="button"
+                          onClick={() => anular(c.idComprobante)}
+                        >
+                          Anular
+                        </button>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              ))}
+
+              {!comprobantesFiltrados.length && (
+                <tr>
+                  <td colSpan="7">No hay comprobantes registrados.</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
 
+      <ModalEmision />
       <ModalComprobante />
     </div>
   );

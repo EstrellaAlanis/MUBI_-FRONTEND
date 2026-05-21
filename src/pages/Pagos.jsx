@@ -19,6 +19,9 @@ export default function Pagos({ role, user }) {
   const [form, setForm] = useState(emptyForm);
   const [archivoComprobante, setArchivoComprobante] = useState(null);
   const [previewComprobante, setPreviewComprobante] = useState('');
+  const [selectedPago, setSelectedPago] = useState(null);
+  const [search, setSearch] = useState('');
+  const [filterMetodo, setFilterMetodo] = useState('todos');
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
 
@@ -38,7 +41,10 @@ export default function Pagos({ role, user }) {
 
     const pedidosCliente = getPedidosCliente(pedidosList);
     const pedidosDisponibles = role === 'cliente'
-      ? pedidosCliente.filter(p => ['confirmado', 'pagado'].includes(String(p.estadoPedido).toLowerCase()) || Number(p.saldoPendiente || 0) > 0)
+      ? pedidosCliente.filter(p => {
+          const estado = String(p.estadoPedido || '').toLowerCase();
+          return estado === 'confirmado' || estado === 'pagado' || Number(p.saldoPendiente || 0) > 0;
+        })
       : pedidosList;
 
     setForm(prev => ({
@@ -76,10 +82,45 @@ export default function Pagos({ role, user }) {
     p => Number(p.idPedido) === Number(form.idPedido)
   );
 
+  const pedidoName = (id) => {
+    const pedido = pedidos.find(p => Number(p.idPedido) === Number(id));
+    return pedido?.cliente || `Pedido #${id}`;
+  };
+
+  const getPedidoPago = (idPedido) => {
+    return pedidos.find(p => Number(p.idPedido) === Number(idPedido));
+  };
+
+  const getComprobantePedido = (idPedido) => {
+    return comprobantes.find(c =>
+      Number(c.idPedido) === Number(idPedido) &&
+      String(c.estado || '').toLowerCase() === 'emitido'
+    );
+  };
+
+  const pagosFiltrados = useMemo(() => {
+    return pagosCliente.filter(p => {
+      const pedido = getPedidoPago(p.idPedido);
+      const texto = `${pedidoName(p.idPedido)} ${p.metodoPago} ${p.tipoPago} ${p.monto} ${pedido?.estadoPedido || ''}`.toLowerCase();
+      const matchSearch = texto.includes(search.toLowerCase());
+      const matchMetodo = filterMetodo === 'todos' || String(p.metodoPago || '').toLowerCase() === filterMetodo;
+
+      return matchSearch && matchMetodo;
+    });
+  }, [pagosCliente, pedidos, search, filterMetodo]);
+
   const totalMostrado = useMemo(
     () => pagosCliente.reduce((acc, p) => acc + Number(p.monto || 0), 0),
     [pagosCliente]
   );
+
+  const pedidosConSaldo = useMemo(() => {
+    return pedidos.filter(p => Number(p.saldoPendiente || 0) > 0);
+  }, [pedidos]);
+
+  const pagosConArchivo = useMemo(() => {
+    return pagosCliente.filter(p => p.comprobante).length;
+  }, [pagosCliente]);
 
   const subirComprobante = async () => {
     if (!archivoComprobante) return form.comprobante || '';
@@ -172,25 +213,290 @@ export default function Pagos({ role, user }) {
       await api.delete(`${endpoints.pagos}/${id}`);
       setMessage('Pago eliminado.');
       await load();
+      setSelectedPago(null);
     } catch (err) {
       setError(err.message);
     }
   };
 
-  const pedidoName = (id) => {
-    const pedido = pedidos.find(p => Number(p.idPedido) === Number(id));
-    return pedido?.cliente || `Pedido #${id}`;
-  };
-  const getComprobantePedido = (idPedido) => {
-    return comprobantes.find(c =>
-      Number(c.idPedido) === Number(idPedido) &&
-      String(c.estado || '').toLowerCase() === 'emitido'
+  const ModalPago = () => {
+    if (!selectedPago) return null;
+
+    const pedido = getPedidoPago(selectedPago.idPedido);
+    const comprobanteVenta = getComprobantePedido(selectedPago.idPedido);
+
+    return (
+      <div className="modal-backdrop-custom">
+        <div className="pedido-modal admin-management-modal">
+          <div className="pedido-modal-header">
+            <div>
+              <span className="badge-soft">Detalle del pago</span>
+              <h3>Pago #{selectedPago.idPago}</h3>
+              <p>{pedido?.cliente || `Pedido #${selectedPago.idPedido}`}</p>
+            </div>
+
+            <button
+              className="btn btn-sm btn-outline-danger"
+              type="button"
+              onClick={() => setSelectedPago(null)}
+            >
+              Cerrar
+            </button>
+          </div>
+
+          <div className="admin-detail-grid">
+            <div>
+              <strong>Pedido</strong>
+              <p>#{selectedPago.idPedido}</p>
+            </div>
+
+            <div>
+              <strong>Monto pagado</strong>
+              <p>S/ {Number(selectedPago.monto || 0).toFixed(2)}</p>
+            </div>
+
+            <div>
+              <strong>Método</strong>
+              <p>{selectedPago.metodoPago}</p>
+            </div>
+
+            <div>
+              <strong>Tipo</strong>
+              <p>{selectedPago.tipoPago}</p>
+            </div>
+
+            <div>
+              <strong>Estado pedido</strong>
+              <p>{pedido?.estadoPedido || 'No encontrado'}</p>
+            </div>
+
+            <div>
+              <strong>Saldo pedido</strong>
+              <p>S/ {Number(pedido?.saldoPendiente || 0).toFixed(2)}</p>
+            </div>
+          </div>
+
+          <div className="payment-admin-preview">
+            <span className="badge-soft">Comprobante del cliente</span>
+
+            {selectedPago.comprobante ? (
+              selectedPago.comprobante.toLowerCase().endsWith('.pdf') ? (
+                <a
+                  className="btn btn-outline-dark"
+                  href={`${API_BASE_URL}${selectedPago.comprobante}`}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  <i className="bi bi-file-earmark-pdf"></i> Abrir PDF
+                </a>
+              ) : (
+                <a
+                  href={`${API_BASE_URL}${selectedPago.comprobante}`}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  <img src={`${API_BASE_URL}${selectedPago.comprobante}`} alt="Comprobante de pago" />
+                  <span>Ver imagen completa</span>
+                </a>
+              )
+            ) : (
+              <p>No se adjuntó comprobante.</p>
+            )}
+          </div>
+
+          <div className="admin-action-grid mt-3">
+            {pedido && Number(pedido.saldoPendiente || 0) <= 0 && !comprobanteVenta && (
+              <a className="btn btn-primary" href="/comprobantes">
+                <i className="bi bi-receipt"></i> Ir a generar comprobante
+              </a>
+            )}
+
+            {comprobanteVenta && (
+              <span className="badge-soft">
+                <i className="bi bi-receipt-cutoff"></i> {comprobanteVenta.numeroCompleto}
+              </span>
+            )}
+
+            <button
+              className="btn btn-outline-danger"
+              type="button"
+              onClick={() => remove(selectedPago.idPago)}
+            >
+              <i className="bi bi-trash"></i> Eliminar pago
+            </button>
+          </div>
+        </div>
+      </div>
     );
   };
-  const title = role === 'admin' ? 'Gestión de pagos' : 'Mis pagos';
+
+  const title = role === 'admin' ? 'Supervisión de pagos' : 'Mis pagos';
   const subtitle = role === 'admin'
-    ? 'Control de adelantos, pagos finales, métodos de pago y saldo pendiente.'
+    ? 'Vista de control para revisar pagos recibidos, comprobantes adjuntos y saldos por pedido.'
     : 'Registra tu adelanto o pago final y consulta el historial de tus pagos.';
+
+  if (role === 'admin') {
+    return (
+      <div className="fade-in pagos-page admin-management-page">
+        <PageHeader
+          icon="bi-cash-coin"
+          title={title}
+          subtitle={subtitle}
+        />
+
+        {error && <div className="alert alert-danger">{error}</div>}
+        {message && <div className="alert alert-success">{message}</div>}
+
+        <div className="admin-stats-grid">
+          <article className="report-card">
+            <span>Total pagado</span>
+            <strong>S/ {totalMostrado.toFixed(2)}</strong>
+            <p>Pagos registrados.</p>
+          </article>
+
+          <article className="report-card">
+            <span>Pagos recibidos</span>
+            <strong>{pagosCliente.length}</strong>
+            <p>Movimientos actuales.</p>
+          </article>
+
+          <article className="report-card">
+            <span>Con comprobante</span>
+            <strong>{pagosConArchivo}</strong>
+            <p>Archivos adjuntos.</p>
+          </article>
+
+          <article className="report-card">
+            <span>Pedidos con saldo</span>
+            <strong>{pedidosConSaldo.length}</strong>
+            <p>Pendientes de completar pago.</p>
+          </article>
+        </div>
+
+        <div className="panel-card admin-list-panel">
+          <div className="admin-list-header">
+            <div>
+              <h4>Pagos recibidos</h4>
+              <p>Revisa los pagos enviados por clientes y valida sus comprobantes.</p>
+            </div>
+
+            <button className="btn btn-outline-dark" type="button" onClick={load}>
+              <i className="bi bi-arrow-clockwise"></i> Actualizar
+            </button>
+          </div>
+
+          <div className="admin-toolbar">
+            <input
+              className="form-control"
+              placeholder="Buscar por pedido, cliente, método o estado..."
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+            />
+
+            <select
+              className="form-select"
+              value={filterMetodo}
+              onChange={e => setFilterMetodo(e.target.value)}
+            >
+              <option value="todos">Todos los métodos</option>
+              <option value="yape">Yape</option>
+              <option value="plin">Plin</option>
+              <option value="transferencia">Transferencia</option>
+              <option value="efectivo">Efectivo</option>
+            </select>
+          </div>
+
+          <div className="table-responsive admin-dark-table-wrap">
+            <table className="table align-middle admin-dark-table">
+              <thead>
+                <tr>
+                  <th>Pedido</th>
+                  <th>Monto</th>
+                  <th>Método</th>
+                  <th>Tipo</th>
+                  <th>Pago</th>
+                  <th>Boleta / Factura</th>
+                  <th>Fecha</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                {pagosFiltrados.map(p => {
+                  const comprobanteVenta = getComprobantePedido(p.idPedido);
+
+                  return (
+                    <tr key={p.idPago}>
+                      <td>
+                        <strong>{pedidoName(p.idPedido)}</strong>
+                        <small>Pedido #{p.idPedido}</small>
+                      </td>
+
+                      <td>S/ {Number(p.monto || 0).toFixed(2)}</td>
+                      <td>{p.metodoPago}</td>
+                      <td>{p.tipoPago}</td>
+
+                      <td>
+                        {p.comprobante ? (
+                          <span className="badge-soft">
+                            <i className="bi bi-paperclip"></i> adjunto
+                          </span>
+                        ) : (
+                          <span className="text-muted">Sin archivo</span>
+                        )}
+                      </td>
+
+                      <td>
+                        {comprobanteVenta ? (
+                          <span className="badge-soft">
+                            <i className="bi bi-receipt-cutoff"></i>{' '}
+                            {comprobanteVenta.numeroCompleto}
+                          </span>
+                        ) : (
+                          <span className="text-muted">Pendiente</span>
+                        )}
+                      </td>
+
+                      <td>{new Date(p.fechaPago).toLocaleDateString()}</td>
+
+                      <td>
+                        <button
+                          className="btn btn-sm btn-outline-dark"
+                          type="button"
+                          onClick={() => setSelectedPago(p)}
+                        >
+                          Revisar
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+
+                {!pagosFiltrados.length && (
+                  <tr>
+                    <td colSpan="8">No hay pagos registrados.</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div className="panel-card admin-operational-note">
+          <i className="bi bi-info-circle"></i>
+          <div>
+            <strong>Flujo recomendado</strong>
+            <p>
+              El cliente registra el pago con comprobante. El administrador revisa el archivo,
+              confirma que el saldo esté correcto y luego genera boleta o factura desde el módulo de comprobantes.
+            </p>
+          </div>
+        </div>
+
+        <ModalPago />
+      </div>
+    );
+  }
 
   return (
     <div className="fade-in pagos-page">
@@ -205,33 +511,31 @@ export default function Pagos({ role, user }) {
 
       <div className="stats-grid compact">
         <article className="report-card">
-          <span>{role === 'admin' ? 'Total pagado' : 'Mis pagos registrados'}</span>
+          <span>Mis pagos registrados</span>
           <strong>S/ {totalMostrado.toFixed(2)}</strong>
-          <p>{role === 'admin' ? 'Registrado en backend.' : 'Pagos enviados por el cliente.'}</p>
+          <p>Pagos enviados por el cliente.</p>
         </article>
 
         <article className="report-card">
-          <span>{role === 'admin' ? 'Pagos' : 'Cantidad de pagos'}</span>
+          <span>Cantidad de pagos</span>
           <strong>{pagosCliente.length}</strong>
           <p>Historial actual.</p>
         </article>
       </div>
 
-      {role === 'cliente' && (
-        <div className="payment-client-info panel-card">
-          <span className="badge-soft">Flujo de pago</span>
-          <h4>Primero el admin confirma tu pedido, luego registras tu adelanto</h4>
-          <p>
-            Cuando tu pedido esté confirmado, puedes registrar un adelanto o pago final
-            usando Yape, Plin o transferencia. Adjunta tu comprobante para que MUBI lo valide.
-          </p>
-        </div>
-      )}
+      <div className="payment-client-info panel-card">
+        <span className="badge-soft">Flujo de pago</span>
+        <h4>Primero el admin confirma tu pedido, luego registras tu adelanto</h4>
+        <p>
+          Cuando tu pedido esté confirmado, puedes registrar un adelanto o pago final
+          usando Yape, Plin o transferencia. Adjunta tu comprobante para que MUBI lo valide.
+        </p>
+      </div>
 
       <div className="row g-4">
-        <div className={role === 'admin' ? 'col-lg-4' : 'col-lg-5'}>
+        <div className="col-lg-5">
           <form className="panel-card form-card" onSubmit={submit}>
-            <h4>{role === 'admin' ? 'Registrar pago' : 'Enviar comprobante de pago'}</h4>
+            <h4>Enviar comprobante de pago</h4>
 
             <div className="payment-flow-info">
               <span>Flujo:</span>
@@ -252,7 +556,7 @@ export default function Pagos({ role, user }) {
               ))}
             </select>
 
-            {role === 'cliente' && !pedidosParaPago.length && (
+            {!pedidosParaPago.length && (
               <small className="helper-text">
                 Aún no tienes pedidos confirmados para registrar pago.
               </small>
@@ -339,17 +643,17 @@ export default function Pagos({ role, user }) {
             <button
               className="btn btn-primary w-100 mt-3"
               type="submit"
-              disabled={role === 'cliente' && !pedidosParaPago.length}
+              disabled={!pedidosParaPago.length}
             >
-              {role === 'admin' ? 'Guardar pago' : 'Enviar pago'}
+              Enviar pago
             </button>
           </form>
         </div>
 
-        <div className={role === 'admin' ? 'col-lg-8' : 'col-lg-7'}>
+        <div className="col-lg-7">
           <div className="panel-card">
             <div className="section-actions">
-              <h4>{role === 'admin' ? 'Historial de pagos' : 'Mis pagos enviados'}</h4>
+              <h4>Mis pagos enviados</h4>
 
               <button className="btn btn-outline-dark" onClick={load}>
                 Actualizar
@@ -367,7 +671,6 @@ export default function Pagos({ role, user }) {
                     <th>Comprobante pago</th>
                     <th>Boleta / Factura</th>
                     <th>Fecha</th>
-                    {role === 'admin' && <th></th>}
                   </tr>
                 </thead>
 
@@ -407,22 +710,12 @@ export default function Pagos({ role, user }) {
                       </td>
 
                       <td>{new Date(p.fechaPago).toLocaleDateString()}</td>
-                      {role === 'admin' && (
-                        <td>
-                          <button
-                            className="btn btn-sm btn-outline-danger"
-                            onClick={() => remove(p.idPago)}
-                          >
-                            Eliminar
-                          </button>
-                        </td>
-                      )}
                     </tr>
                   ))}
 
                   {!pagosCliente.length && (
                     <tr>
-                      <td colSpan={role === 'admin' ? 8 : 7}>
+                      <td colSpan="7">
                         No hay pagos registrados.
                       </td>
                     </tr>
@@ -433,6 +726,8 @@ export default function Pagos({ role, user }) {
           </div>
         </div>
       </div>
+
+      <ModalPago />
     </div>
   );
 }

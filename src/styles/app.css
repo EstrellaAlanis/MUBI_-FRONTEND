@@ -5776,3 +5776,782 @@ textarea {
     height: 46px;
   }
 }
+/* ===== ADMIN DETALLE PEDIDO: ENTREGA Y COMPROBANTE ===== */
+
+.pedido-checkout-admin {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin: 18px 0;
+}
+
+.pedido-checkout-card,
+.pedido-observacion-box {
+  border: 1px solid rgba(89, 255, 0, .22);
+  background:
+    radial-gradient(circle at 90% 0%, rgba(89, 255, 0, .10), transparent 30%),
+    rgba(255, 255, 255, .045);
+  border-radius: 20px;
+  padding: 16px;
+}
+
+.pedido-checkout-card h4 {
+  margin: 10px 0 12px;
+  color: #f4fff0;
+  font-weight: 900;
+}
+
+.pedido-checkout-list {
+  display: grid;
+  gap: 8px;
+}
+
+.pedido-checkout-list p,
+.pedido-observacion-box p {
+  margin: 0;
+  color: rgba(244, 255, 240, .74);
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.pedido-checkout-list strong,
+.pedido-observacion-box strong {
+  color: #f4fff0;
+}
+
+.pedido-observacion-box {
+  margin: 16px 0;
+}
+
+.pedido-observacion-box > strong {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 900;
+}
+
+@media (max-width: 760px) {
+  .pedido-checkout-admin {
+    grid-template-columns: 1fr;
+  }
+}
+/* ===== ADMIN CENTER: TABLAS OSCURAS + NOTIFICACIONES ===== */
+
+.admin-topbar {
+  background: rgba(7, 12, 9, .92) !important;
+  border-bottom: 1px solid rgba(89, 255, 0, .18) !important;
+}
+
+.admin-topbar h2,
+.admin-topbar .eyebrow {
+  color: #f4fff0;
+}
+
+.admin-topbar-subtitle {
+  display: block;
+  color: rgba(244, 255, 240, .62);
+  margin-top: 4px;
+  font-size: 13px;
+}
+
+.admin-topbar-actions {
+  background: rgba(255, 255, 255, .06) !important;
+  border-color: rgba(89, 255, 0, .18) !important;
+}
+
+.admin-notification-wrap {
+  position: relative;
+}
+
+.admin-notification-btn {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  border: 1px solid rgba(89, 255, 0, .26);
+  background: rgba(255, 255, 255, .07);
+  color: #f4fff0;
+}
+
+.admin-notification-btn.has-alert {
+  color: #071008;
+  background: linear-gradient(135deg, #59ff00, #00c853);
+  box-shadow: 0 0 24px rgba(89, 255, 0, .28);
+}
+
+.admin-notification-btn span {
+  position: absolute;
+  top: -7px;
+  right: -7px;
+  min-width: 21px;
+  height: 21px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  background: #ff5d6c;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.admin-notification-panel {
+  position: absolute;
+  right: 0;
+  top: 54px;
+  width: min(360px, calc(100vw - 28px));
+  z-index: 80;
+  border-radius: 22px;
+  background:
+    radial-gradient(circle at 90% 0%, rgba(89, 255, 0, .16), transparent 34%),
+    #08110c;
+  border: 1px solid rgba(89, 255, 0, .26);
+  box-shadow: 0 26px 80px rgba(0, 0, 0, .58);
+  overflow: hidden;
+}
+
+.admin-notification-header {
+  padding: 16px;
+  border-bottom: 1px solid rgba(89, 255, 0, .14);
+}
+
+.admin-notification-header strong {
+  display: block;
+  color: #f4fff0;
+  font-weight: 900;
+}
+
+.admin-notification-header small {
+  color: rgba(244, 255, 240, .62);
+}
+
+.admin-notification-list {
+  display: grid;
+}
+
+.admin-notification-item {
+  display: grid;
+  grid-template-columns: 16px 1fr auto;
+  gap: 10px;
+  align-items: center;
+  padding: 13px 16px;
+  color: #f4fff0;
+  border-bottom: 1px solid rgba(89, 255, 0, .10);
+}
+
+.admin-notification-item:hover {
+  background: rgba(89, 255, 0, .08);
+  color: #f4fff0;
+}
+
+.admin-notification-item strong,
+.admin-notification-item small {
+  display: block;
+}
+
+.admin-notification-item small {
+  color: rgba(244, 255, 240, .62);
+}
+
+.admin-notification-item em {
+  font-style: normal;
+  font-size: 11px;
+  font-weight: 900;
+  color: #59ff00;
+}
+
+.next-order-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: rgba(89, 255, 0, .45);
+}
+
+.next-order-dot.urgent {
+  background: #59ff00;
+  box-shadow: 0 0 16px rgba(89, 255, 0, .72);
+}
+
+.admin-notification-empty {
+  padding: 18px;
+  color: rgba(244, 255, 240, .70);
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.admin-notification-footer {
+  display: block;
+  padding: 14px 16px;
+  color: #071008;
+  background: linear-gradient(135deg, #59ff00, #00c853);
+  font-weight: 900;
+  text-align: center;
+}
+
+.admin-management-page .page-header {
+  margin-bottom: 22px;
+}
+
+.admin-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.admin-list-panel {
+  overflow: hidden;
+}
+
+.admin-list-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: flex-start;
+  margin-bottom: 16px;
+}
+
+.admin-list-header h4 {
+  margin: 0 0 4px;
+  color: #f4fff0;
+}
+
+.admin-list-header p {
+  margin: 0;
+  color: rgba(244, 255, 240, .64);
+}
+
+.admin-toolbar {
+  display: grid;
+  grid-template-columns: 1fr 220px;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.admin-toolbar .form-control,
+.admin-toolbar .form-select {
+  background: rgba(7, 16, 8, .82);
+  color: #f4fff0;
+  border: 1px solid rgba(89, 255, 0, .22);
+  border-radius: 16px;
+  min-height: 50px;
+}
+
+.admin-dark-table-wrap {
+  border-radius: 20px;
+  border: 1px solid rgba(89, 255, 0, .14);
+  background: #08110c;
+  overflow: auto;
+}
+
+.admin-dark-table {
+  margin: 0;
+  color: #f4fff0;
+  min-width: 760px;
+}
+
+.admin-dark-table thead th,
+.table thead th {
+  background: #0d1a12 !important;
+  color: #86ff61 !important;
+  border-color: rgba(89, 255, 0, .14) !important;
+  font-weight: 900;
+}
+
+.admin-dark-table tbody td,
+.table tbody td {
+  background: rgba(8, 17, 12, .96) !important;
+  color: rgba(244, 255, 240, .82) !important;
+  border-color: rgba(89, 255, 0, .10) !important;
+}
+
+.admin-dark-table tbody tr:hover td,
+.table tbody tr:hover td {
+  background: rgba(89, 255, 0, .08) !important;
+}
+
+.admin-dark-table td strong {
+  display: block;
+  color: #f4fff0;
+}
+
+.admin-dark-table td small {
+  display: block;
+  margin-top: 4px;
+  color: rgba(244, 255, 240, .56);
+}
+
+.admin-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin: 16px 0;
+}
+
+.admin-detail-grid > div {
+  border: 1px solid rgba(89, 255, 0, .16);
+  background: rgba(255, 255, 255, .045);
+  border-radius: 16px;
+  padding: 14px;
+}
+
+.admin-detail-grid strong {
+  display: block;
+  color: #86ff61;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  margin-bottom: 6px;
+}
+
+.admin-detail-grid p {
+  margin: 0;
+  color: #f4fff0;
+}
+
+.admin-management-modal .form-control,
+.admin-management-modal .form-select {
+  background: rgba(7, 16, 8, .82);
+  color: #f4fff0;
+  border: 1px solid rgba(89, 255, 0, .22);
+  border-radius: 14px;
+}
+
+.admin-management-modal label {
+  color: #f4fff0;
+  font-weight: 900;
+  margin: 10px 0 6px;
+}
+
+.admin-action-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.admin-action-grid .btn {
+  flex: 1;
+  min-width: 170px;
+}
+
+@media (max-width: 1100px) {
+  .admin-stats-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .admin-toolbar {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 720px) {
+  .admin-topbar {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .admin-topbar-actions {
+    width: 100%;
+    justify-content: space-between;
+    flex-wrap: wrap;
+  }
+
+  .admin-stats-grid,
+  .admin-detail-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-list-header {
+    flex-direction: column;
+  }
+
+  .admin-notification-panel {
+    right: auto;
+    left: 0;
+  }
+}
+/* ===== ADMIN PEDIDOS: COLA OPERATIVA FIFO ===== */
+
+.admin-orders-page .page-header {
+  margin-bottom: 22px;
+}
+
+.next-order-card {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 20px;
+  align-items: center;
+  margin-bottom: 22px;
+  background:
+    radial-gradient(circle at 92% 0%, rgba(89, 255, 0, .18), transparent 34%),
+    linear-gradient(135deg, rgba(8, 17, 12, .98), rgba(12, 28, 17, .96)) !important;
+  border-color: rgba(89, 255, 0, .26) !important;
+}
+
+.next-order-main h3 {
+  color: #f4fff0;
+  font-size: clamp(28px, 4vw, 42px);
+  font-weight: 900;
+  margin: 12px 0 8px;
+}
+
+.next-order-main p {
+  color: rgba(244, 255, 240, .70);
+  margin: 0;
+  max-width: 720px;
+}
+
+.next-order-meta {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.next-order-meta div {
+  border: 1px solid rgba(89, 255, 0, .15);
+  background: rgba(255, 255, 255, .045);
+  border-radius: 16px;
+  padding: 12px;
+}
+
+.next-order-meta strong,
+.next-order-meta span {
+  display: block;
+}
+
+.next-order-meta strong {
+  color: #86ff61;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+}
+
+.next-order-meta span {
+  color: #f4fff0;
+  margin-top: 4px;
+  font-weight: 800;
+}
+
+.next-order-actions {
+  display: grid;
+  gap: 10px;
+  min-width: 210px;
+}
+
+.empty-next-order {
+  grid-template-columns: 58px 1fr;
+}
+
+.empty-next-order > i {
+  width: 58px;
+  height: 58px;
+  display: grid;
+  place-items: center;
+  border-radius: 18px;
+  color: #071008;
+  background: linear-gradient(135deg, #59ff00, #00c853);
+  font-size: 28px;
+}
+
+.fifo-list {
+  display: grid;
+  gap: 12px;
+}
+
+.fifo-item {
+  display: grid;
+  grid-template-columns: 42px 1fr auto;
+  gap: 12px;
+  align-items: center;
+  border-radius: 18px;
+  border: 1px solid rgba(89, 255, 0, .14);
+  background: rgba(8, 17, 12, .88);
+  padding: 13px;
+}
+
+.fifo-item.urgent {
+  border-color: rgba(89, 255, 0, .48);
+  background:
+    radial-gradient(circle at 100% 0%, rgba(89, 255, 0, .18), transparent 38%),
+    rgba(8, 17, 12, .95);
+  box-shadow: 0 0 26px rgba(89, 255, 0, .10);
+}
+
+.fifo-index {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  border-radius: 14px;
+  background: rgba(89, 255, 0, .12);
+  color: #86ff61;
+  font-weight: 900;
+}
+
+.fifo-item.urgent .fifo-index {
+  background: linear-gradient(135deg, #59ff00, #00c853);
+  color: #071008;
+}
+
+.fifo-content strong,
+.fifo-content span,
+.fifo-content small {
+  display: block;
+}
+
+.fifo-content strong {
+  color: #f4fff0;
+  font-weight: 900;
+}
+
+.fifo-content span {
+  color: rgba(244, 255, 240, .76);
+  margin-top: 2px;
+}
+
+.fifo-content small {
+  color: rgba(244, 255, 240, .52);
+  margin-top: 3px;
+}
+
+.fifo-actions {
+  display: grid;
+  justify-items: end;
+  gap: 8px;
+}
+
+.fifo-empty {
+  display: grid;
+  place-items: center;
+  text-align: center;
+  gap: 8px;
+  min-height: 180px;
+  border-radius: 18px;
+  border: 1px dashed rgba(89, 255, 0, .22);
+  color: rgba(244, 255, 240, .68);
+  padding: 20px;
+}
+
+.fifo-empty i {
+  font-size: 36px;
+  color: #86ff61;
+}
+
+.fifo-empty strong {
+  color: #f4fff0;
+}
+
+.admin-orders-table .tracking-pedido {
+  min-width: 160px;
+  margin-top: 8px;
+}
+
+.admin-orders-table .tracking-step span {
+  width: 22px;
+  height: 22px;
+  font-size: 11px;
+}
+
+.admin-orders-table .tracking-step small {
+  font-size: 10px;
+}
+
+.admin-orders-table .form-select-sm {
+  min-width: 150px;
+  background: rgba(7, 16, 8, .82);
+  color: #f4fff0;
+  border-color: rgba(89, 255, 0, .22);
+}
+
+.admin-operational-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-top: 22px;
+  background:
+    radial-gradient(circle at 92% 0%, rgba(89, 255, 0, .10), transparent 32%),
+    rgba(8, 17, 12, .96) !important;
+}
+
+.admin-operational-note i {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  border-radius: 14px;
+  background: rgba(89, 255, 0, .12);
+  color: #86ff61;
+  font-size: 22px;
+}
+
+.admin-operational-note strong {
+  display: block;
+  color: #f4fff0;
+  font-weight: 900;
+}
+
+.admin-operational-note p {
+  margin: 4px 0 0;
+  color: rgba(244, 255, 240, .68);
+  line-height: 1.55;
+}
+
+@media (max-width: 1100px) {
+  .next-order-card {
+    grid-template-columns: 1fr;
+  }
+
+  .next-order-actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .next-order-meta {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 620px) {
+  .fifo-item {
+    grid-template-columns: 36px 1fr;
+  }
+
+  .fifo-actions {
+    grid-column: 1 / -1;
+    justify-items: stretch;
+  }
+
+  .next-order-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-operational-note {
+    flex-direction: column;
+  }
+}
+/* ===== ADMIN PAGOS: SUPERVISIÓN SIN FORMULARIO PRINCIPAL ===== */
+
+.payment-admin-preview {
+  margin-top: 16px;
+  border: 1px solid rgba(89, 255, 0, .16);
+  background: rgba(255, 255, 255, .045);
+  border-radius: 18px;
+  padding: 16px;
+}
+
+.payment-admin-preview .badge-soft {
+  margin-bottom: 12px;
+}
+
+.payment-admin-preview img {
+  width: 100%;
+  max-height: 420px;
+  object-fit: contain;
+  display: block;
+  border-radius: 16px;
+  background: #071008;
+  border: 1px solid rgba(89, 255, 0, .14);
+}
+
+.payment-admin-preview a {
+  display: block;
+  color: #86ff61;
+  font-weight: 900;
+}
+
+.payment-admin-preview a span {
+  display: block;
+  margin-top: 8px;
+}
+
+.payment-admin-preview p {
+  color: rgba(244, 255, 240, .68);
+  margin: 0;
+}
+
+.pagos-page.admin-management-page .admin-dark-table td .badge-soft {
+  gap: 6px;
+}
+
+.pagos-page .payment-client-info.panel-card {
+  background:
+    radial-gradient(circle at 92% 0%, rgba(89, 255, 0, .10), transparent 32%),
+    rgba(8, 17, 12, .96) !important;
+}
+
+.pagos-page .payment-client-info h4 {
+  color: #f4fff0;
+}
+
+.pagos-page .payment-client-info p {
+  color: rgba(244, 255, 240, .68);
+}
+
+@media (max-width: 760px) {
+  .payment-admin-preview img {
+    max-height: 300px;
+  }
+}
+/* ===== ADMIN COMPROBANTES: EMISIÓN DESDE PEDIDOS ===== */
+
+.invoice-queue-panel {
+  background:
+    radial-gradient(circle at 92% 0%, rgba(89, 255, 0, .10), transparent 34%),
+    rgba(8, 17, 12, .96) !important;
+}
+
+.invoice-queue-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.invoice-queue-card {
+  border: 1px solid rgba(89, 255, 0, .16);
+  background:
+    radial-gradient(circle at 100% 0%, rgba(89, 255, 0, .12), transparent 34%),
+    rgba(255, 255, 255, .045);
+  border-radius: 20px;
+  padding: 16px;
+}
+
+.invoice-queue-card h4 {
+  margin: 12px 0 8px;
+  color: #f4fff0;
+  font-weight: 900;
+}
+
+.invoice-queue-card p,
+.invoice-queue-card small {
+  display: block;
+  color: rgba(244, 255, 240, .66);
+  line-height: 1.45;
+}
+
+.invoice-queue-card small {
+  margin-top: 8px;
+}
+
+.comprobantes-page .admin-dark-table td .table-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.comprobantes-page .admin-management-modal textarea.form-control {
+  min-height: 92px;
+}
+
+@media (max-width: 1100px) {
+  .invoice-queue-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 680px) {
+  .invoice-queue-grid {
+    grid-template-columns: 1fr;
+  }
+}

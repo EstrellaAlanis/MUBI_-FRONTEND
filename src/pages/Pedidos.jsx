@@ -181,9 +181,43 @@ const actualizarDatosClienteCheckout = async () => {
     : Number(selectedProduct?.precio || 0) * Number(form.cantidad || 0);
 
   const checkoutDatosTexto = crearResumenDatosCheckout(checkoutDatos);
-  const pedidosPendientes = pedidos.filter(
-    p => String(p.estadoPedido).toLowerCase() === 'pendiente'
+
+  const ordenarPorFechaAsc = (lista) => [...lista].sort((a, b) => {
+    const fechaA = new Date(a.fechaPedido || a.fechaRegistro || 0).getTime();
+    const fechaB = new Date(b.fechaPedido || b.fechaRegistro || 0).getTime();
+    return fechaA - fechaB;
+  });
+
+  const ordenarPorFechaDesc = (lista) => [...lista].sort((a, b) => {
+    const fechaA = new Date(a.fechaPedido || a.fechaRegistro || 0).getTime();
+    const fechaB = new Date(b.fechaPedido || b.fechaRegistro || 0).getTime();
+    return fechaB - fechaA;
+  });
+
+  const colaPendiente = ordenarPorFechaAsc(
+    pedidos.filter(p => String(p.estadoPedido || '').toLowerCase() === 'pendiente')
+  );
+
+  const siguientePedido = colaPendiente[0] || null;
+  const pedidosPendientes = colaPendiente.length;
+
+  const pedidosConfirmados = pedidos.filter(
+    p => String(p.estadoPedido || '').toLowerCase() === 'confirmado'
   ).length;
+
+  const pedidosProduccion = pedidos.filter(
+    p => String(p.estadoPedido || '').toLowerCase() === 'en_proceso'
+  ).length;
+
+  const pedidosEntregados = pedidos.filter(
+    p => String(p.estadoPedido || '').toLowerCase() === 'entregado'
+  ).length;
+
+  const pedidosCancelados = pedidos.filter(
+    p => String(p.estadoPedido || '').toLowerCase() === 'cancelado'
+  ).length;
+
+  const pedidosHistorial = ordenarPorFechaDesc(pedidos);
 
   const clienteActual = clientes.find(c =>
     Number(c.idUsuario) === Number(user?.idUsuario) ||
@@ -425,6 +459,27 @@ const getComprobantePedido = (idPedido) => {
     Number(c.idPedido) === Number(idPedido) &&
     String(c.estado || '').toLowerCase() === 'emitido'
   );
+};
+
+const extraerDatoObservacion = (texto, etiqueta) => {
+  const contenido = String(texto || '');
+  const regex = new RegExp(`${etiqueta}:\\s*([^|\\n]+)`, 'i');
+  const match = contenido.match(regex);
+  return match ? match[1].trim() : '';
+};
+
+const getDatosCheckoutPedido = (pedido) => {
+  const obs = pedido?.observaciones || '';
+
+  return {
+    telefono: extraerDatoObservacion(obs, 'Teléfono'),
+    direccion: extraerDatoObservacion(obs, 'Dirección'),
+    referencia: extraerDatoObservacion(obs, 'Referencia'),
+    tipoComprobante: extraerDatoObservacion(obs, 'Comprobante'),
+    dni: extraerDatoObservacion(obs, 'DNI'),
+    ruc: extraerDatoObservacion(obs, 'RUC'),
+    razonSocial: extraerDatoObservacion(obs, 'Razón social')
+  };
 };
 
 const imprimirComprobante = (comprobante) => {
@@ -902,27 +957,77 @@ const imprimirComprobante = (comprobante) => {
 
           <TrackingPedido estado={pedidoSeleccionado.estadoPedido} />
 
-          <div className="pedido-detail-grid mt-3">
-            <div>
-              <strong>Estado</strong>
-              <p>{pedidoSeleccionado.estadoPedido}</p>
-            </div>
+          {(() => {
+            const datos = getDatosCheckoutPedido(pedidoSeleccionado);
+            const tieneEntrega = datos.telefono || datos.direccion || datos.referencia;
+            const tieneComprobante = datos.tipoComprobante || datos.dni || datos.ruc || datos.razonSocial;
 
-            <div>
-              <strong>Total</strong>
-              <p>S/ {Number(pedidoSeleccionado.montoTotal || 0).toFixed(2)}</p>
-            </div>
+            return (
+              <>
+                <div className="pedido-detail-grid mt-3">
+                  <div>
+                    <strong>Estado</strong>
+                    <p>{pedidoSeleccionado.estadoPedido}</p>
+                  </div>
 
-            <div>
-              <strong>Saldo</strong>
-              <p>S/ {Number(pedidoSeleccionado.saldoPendiente || 0).toFixed(2)}</p>
-            </div>
+                  <div>
+                    <strong>Total</strong>
+                    <p>S/ {Number(pedidoSeleccionado.montoTotal || 0).toFixed(2)}</p>
+                  </div>
 
-            <div>
-              <strong>Observaciones</strong>
-              <p>{pedidoSeleccionado.observaciones || 'Sin observaciones'}</p>
-            </div>
-          </div>
+                  <div>
+                    <strong>Saldo</strong>
+                    <p>S/ {Number(pedidoSeleccionado.saldoPendiente || 0).toFixed(2)}</p>
+                  </div>
+
+                  <div>
+                    <strong>Cliente</strong>
+                    <p>{pedidoSeleccionado.cliente || `Cliente #${pedidoSeleccionado.idCliente}`}</p>
+                  </div>
+                </div>
+
+                {(tieneEntrega || tieneComprobante) && (
+                  <div className="pedido-checkout-admin">
+                    {tieneEntrega && (
+                      <div className="pedido-checkout-card">
+                        <span className="badge-soft">Datos de entrega</span>
+                        <h4>Información del cliente</h4>
+
+                        <div className="pedido-checkout-list">
+                          <p><strong>Teléfono:</strong> {datos.telefono || 'No registrado'}</p>
+                          <p><strong>Dirección:</strong> {datos.direccion || 'No registrada'}</p>
+                          <p><strong>Referencia:</strong> {datos.referencia || 'No registrada'}</p>
+                        </div>
+                      </div>
+                    )}
+
+                    {tieneComprobante && (
+                      <div className="pedido-checkout-card">
+                        <span className="badge-soft">Comprobante solicitado</span>
+                        <h4>{datos.tipoComprobante || 'No indicado'}</h4>
+
+                        <div className="pedido-checkout-list">
+                          {datos.tipoComprobante?.toLowerCase() === 'factura' ? (
+                            <>
+                              <p><strong>RUC:</strong> {datos.ruc || 'No registrado'}</p>
+                              <p><strong>Razón social:</strong> {datos.razonSocial || 'No registrada'}</p>
+                            </>
+                          ) : (
+                            <p><strong>DNI:</strong> {datos.dni || 'No registrado'}</p>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                <div className="pedido-observacion-box">
+                  <strong>Observaciones generales</strong>
+                  <p>{pedidoSeleccionado.observaciones || 'Sin observaciones'}</p>
+                </div>
+              </>
+            );
+          })()}
 
           {pedidoSeleccionado.detalles?.map((d, index) => (
             <div className="pedido-detail-card" key={index}>
@@ -1149,114 +1254,207 @@ const imprimirComprobante = (comprobante) => {
   }
 
   return (
-    <div className="fade-in">
+    <div className="fade-in admin-management-page admin-orders-page">
       <PageHeader
         icon="bi-clipboard-check-fill"
-        title="Gestión de pedidos"
-        subtitle="Registro de pedidos personalizados con cliente, producto, talla, color, diseño y especificaciones."
+        title="Cola operativa de pedidos"
+        subtitle="Vista de despacho para revisar pedidos por orden de llegada, priorizar pendientes y actualizar estados."
       />
 
       {error && <div className="alert alert-danger">{error}</div>}
       {message && <div className="alert alert-success">{message}</div>}
 
-      {pedidosPendientes > 0 && (
-        <div className="alert alert-warning">
-          🔔 Tienes {pedidosPendientes} pedido(s) pendiente(s) por revisar.
-        </div>
+      <div className="admin-stats-grid">
+        <article className="report-card">
+          <span>Pedidos pendientes</span>
+          <strong>{pedidosPendientes}</strong>
+          <p>En cola de revisión.</p>
+        </article>
+
+        <article className="report-card">
+          <span>Confirmados</span>
+          <strong>{pedidosConfirmados}</strong>
+          <p>Listos para pago o producción.</p>
+        </article>
+
+        <article className="report-card">
+          <span>En producción</span>
+          <strong>{pedidosProduccion}</strong>
+          <p>Trabajos activos.</p>
+        </article>
+
+        <article className="report-card">
+          <span>Entregados</span>
+          <strong>{pedidosEntregados}</strong>
+          <p>Pedidos finalizados.</p>
+        </article>
+      </div>
+
+      {siguientePedido ? (
+        <section className="next-order-card panel-card">
+          <div className="next-order-main">
+            <span className="badge-soft">Siguiente pedido FIFO</span>
+            <h3>Pedido #{siguientePedido.idPedido}</h3>
+            <p>
+              Debe revisarse primero porque es el pedido pendiente más antiguo registrado en la cola.
+            </p>
+
+            <div className="next-order-meta">
+              <div>
+                <strong>Cliente</strong>
+                <span>{siguientePedido.cliente || `Cliente #${siguientePedido.idCliente}`}</span>
+              </div>
+
+              <div>
+                <strong>Total</strong>
+                <span>S/ {Number(siguientePedido.montoTotal || 0).toFixed(2)}</span>
+              </div>
+
+              <div>
+                <strong>Fecha</strong>
+                <span>{siguientePedido.fechaPedido ? new Date(siguientePedido.fechaPedido).toLocaleString() : 'Sin fecha'}</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="next-order-actions">
+            <button
+              className="btn btn-primary"
+              type="button"
+              onClick={() => setPedidoSeleccionado(siguientePedido)}
+            >
+              <i className="bi bi-eye"></i> Revisar ahora
+            </button>
+
+            <button
+              className="btn btn-outline-dark"
+              type="button"
+              onClick={() => updateEstado(siguientePedido, 'confirmado')}
+            >
+              <i className="bi bi-check2-circle"></i> Confirmar pedido
+            </button>
+          </div>
+        </section>
+      ) : (
+        <section className="next-order-card panel-card empty-next-order">
+          <i className="bi bi-check2-circle"></i>
+          <div>
+            <span className="badge-soft">Cola limpia</span>
+            <h3>No hay pedidos pendientes</h3>
+            <p>Cuando un cliente confirme un pedido desde la web, aparecerá aquí automáticamente.</p>
+          </div>
+        </section>
       )}
 
       <div className="row g-4">
-        <div className="col-lg-4">
-          <FormularioPedido />
-        </div>
+        <div className="col-lg-5">
+          <div className="panel-card admin-list-panel">
+            <div className="admin-list-header">
+              <div>
+                <h4>Cola de trabajo FIFO</h4>
+                <p>Ordenada del pedido más antiguo al más reciente.</p>
+              </div>
 
-        <div className="col-lg-8">
-          <div className="panel-card">
-            <div className="section-actions">
-              <h4>Pedidos registrados</h4>
-
-              <button className="btn btn-outline-dark" onClick={load}>
-                Actualizar
+              <button className="btn btn-outline-dark" type="button" onClick={load}>
+                <i className="bi bi-arrow-clockwise"></i> Actualizar
               </button>
             </div>
 
-            <div className="table-responsive">
-              <table className="table align-middle">
+            <div className="fifo-list">
+              {colaPendiente.map((p, index) => (
+                <article
+                  key={p.idPedido}
+                  className={`fifo-item ${index === 0 ? 'urgent' : ''}`}
+                >
+                  <div className="fifo-index">{index + 1}</div>
+
+                  <div className="fifo-content">
+                    <strong>Pedido #{p.idPedido}</strong>
+                    <span>{p.cliente || `Cliente #${p.idCliente}`}</span>
+                    <small>
+                      {p.fechaPedido ? new Date(p.fechaPedido).toLocaleString() : 'Sin fecha'} · S/ {Number(p.montoTotal || 0).toFixed(2)}
+                    </small>
+                  </div>
+
+                  <div className="fifo-actions">
+                    {index === 0 && <span className="badge-soft">Siguiente</span>}
+                    <button
+                      className="btn btn-sm btn-outline-dark"
+                      type="button"
+                      onClick={() => setPedidoSeleccionado(p)}
+                    >
+                      Ver
+                    </button>
+                  </div>
+                </article>
+              ))}
+
+              {!colaPendiente.length && (
+                <div className="fifo-empty">
+                  <i className="bi bi-inbox"></i>
+                  <strong>No hay pedidos pendientes.</strong>
+                  <span>La cola se llenará cuando lleguen nuevos pedidos.</span>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div className="col-lg-7">
+          <div className="panel-card admin-list-panel">
+            <div className="admin-list-header">
+              <div>
+                <h4>Historial operativo</h4>
+                <p>Seguimiento general de pedidos, estados, pagos y diseños enviados.</p>
+              </div>
+            </div>
+
+            <div className="table-responsive admin-dark-table-wrap">
+              <table className="table align-middle admin-dark-table admin-orders-table">
                 <thead>
                   <tr>
-                    <th>ID</th>
+                    <th>Pedido</th>
                     <th>Cliente</th>
                     <th>Estado</th>
                     <th>Total</th>
                     <th>Saldo</th>
-                    <th>Acciones</th>
+                    <th>Acción</th>
                   </tr>
                 </thead>
 
                 <tbody>
-                  {pedidos.map(p => (
+                  {pedidosHistorial.map(p => (
                     <tr key={p.idPedido}>
-                      <td>#{p.idPedido}</td>
+                      <td>
+                        <strong>#{p.idPedido}</strong>
+                        <small>{p.fechaPedido ? new Date(p.fechaPedido).toLocaleDateString() : 'Sin fecha'}</small>
+
+                        {p.rutaExcelTallas && (
+                          <a
+                            href={`${API_BASE_URL}${p.rutaExcelTallas}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="excel-download-btn mt-2"
+                          >
+                            <i className="bi bi-file-earmark-excel"></i>
+                            Excel tallas
+                          </a>
+                        )}
+                      </td>
 
                       <td>
                         <strong>{p.cliente || `Cliente #${p.idCliente}`}</strong>
 
-                        {p.rutaExcelTallas && (
-                          <div className="mt-2">
-                            <a
-                              href={`${API_BASE_URL}${p.rutaExcelTallas}`}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="excel-download-btn"
-                            >
-                              <i className="bi bi-file-earmark-excel"></i>
-                              Excel tallas
-                            </a>
-                          </div>
+                        {p.detalles?.some(d => d.rutaDisenoFrontal || d.rutaDisenoPosterior) && (
+                          <small>Diseños adjuntos disponibles</small>
                         )}
-
-                        {p.detalles?.map((d, index) => (
-                          <div key={index} className="mt-2 d-flex gap-2 flex-wrap">
-                            {d.rutaDisenoFrontal && (
-                              <a
-                                href={`${API_BASE_URL}${d.rutaDisenoFrontal}`}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="design-thumb"
-                              >
-                                <img
-                                  src={`${API_BASE_URL}${d.rutaDisenoFrontal}`}
-                                  alt="Diseño frontal"
-                                />
-                                <span>Frente</span>
-                              </a>
-                            )}
-
-                            {d.rutaDisenoPosterior && (
-                              <a
-                                href={`${API_BASE_URL}${d.rutaDisenoPosterior}`}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="design-thumb"
-                              >
-                                <img
-                                  src={`${API_BASE_URL}${d.rutaDisenoPosterior}`}
-                                  alt="Diseño posterior"
-                                />
-                                <span>Espalda</span>
-                              </a>
-                            )}
-                          </div>
-                        ))}
                       </td>
 
                       <td>
-                        <span className="status-pill">{p.estadoPedido}</span>
+                        <span className={`status-pill status-${String(p.estadoPedido || '').toLowerCase()}`}>
+                          {p.estadoPedido}
+                        </span>
                         <TrackingPedido estado={p.estadoPedido} />
-
-                        {p.estadoPedido === 'pendiente' && (
-                          <span className="badge-soft ms-2">Nuevo</span>
-                        )}
                       </td>
 
                       <td>S/ {Number(p.montoTotal || 0).toFixed(2)}</td>
@@ -1269,7 +1467,7 @@ const imprimirComprobante = (comprobante) => {
                             type="button"
                             onClick={() => setPedidoSeleccionado(p)}
                           >
-                            Ver detalle
+                            Detalle
                           </button>
 
                           <select
@@ -1284,19 +1482,12 @@ const imprimirComprobante = (comprobante) => {
                             <option value="entregado">entregado</option>
                             <option value="cancelado">cancelado</option>
                           </select>
-
-                          <button
-                            className="btn btn-sm btn-outline-danger"
-                            onClick={() => remove(p.idPedido)}
-                          >
-                            Eliminar
-                          </button>
                         </div>
                       </td>
                     </tr>
                   ))}
 
-                  {!pedidos.length && (
+                  {!pedidosHistorial.length && (
                     <tr>
                       <td colSpan="6">No hay pedidos registrados.</td>
                     </tr>
@@ -1307,7 +1498,6 @@ const imprimirComprobante = (comprobante) => {
           </div>
         </div>
       </div>
-
       <ModalDetalle />
     </div>
   );

@@ -78,7 +78,7 @@ export default function Dashboard({ role, user }) {
     (p) => String(p.estadoPedido).toLowerCase() === 'entregado'
   ).length;
 
-  const productosDestacados = productos.slice(0, 3);
+  const productosDestacados = productos.slice(0, 8);
 
   const clienteActual = clientes.find(c =>
     Number(c.idUsuario) === Number(user?.idUsuario) ||
@@ -227,45 +227,72 @@ export default function Dashboard({ role, user }) {
           </div> */}
         </section>
 
-        <section className="mubi-section">
-          <div className="mubi-section-title">
+        <section className="mubi-section mubi-commercial-section">
+          <div className="mubi-section-title commercial-title">
             <span>Catálogo</span>
             <h2>Productos destacados</h2>
-            <p>Elige un modelo y úsalo como base para tu pedido personalizado.</p>
+            <p>Modelos listos para personalizar. Elige, agrega al carrito y confirma tu pedido al final.</p>
           </div>
 
-          <div className="mubi-product-showcase">
+          <div className="commercial-strip">
+            <article>
+              <i className="bi bi-lightning-charge-fill"></i>
+              <strong>Compra rápida</strong>
+              <span>Carrito y checkout inmediato</span>
+            </article>
+            <article>
+              <i className="bi bi-palette-fill"></i>
+              <strong>Diseño personalizado</strong>
+              <span>Nombres, números y tallas</span>
+            </article>
+          </div>
+
+          <div className="mubi-product-showcase commercial-product-grid">
             {productosDestacados.map((p, index) => {
-            const img = imagenProducto(p);
+              const img = imagenProducto(p);
+              const disponible = String(p.disponibilidad || '').toLowerCase() === 'disponible';
 
-            return (
-              <article className="mubi-product-card mubi-product-card-pro" key={p.idProducto}>
-                <div className={`mubi-product-img ${img ? 'has-image' : ''} img-${index}`}>
-                  {img ? (
-                    <img src={img} alt={p.nombre} />
-                  ) : (
-                    <i className="bi bi-bag-heart-fill"></i>
-                  )}
-                </div>
+              return (
+                <article className="mubi-product-card mubi-product-card-pro commercial-product-card" key={p.idProducto}>
+                  <div className={`mubi-product-img ${img ? 'has-image' : ''} img-${index}`}>
+                    <div className="commercial-card-badges">
+                      <span>{index < 2 ? 'Más vendido' : disponible ? 'Disponible' : 'Agotado'}</span>
+                    </div>
 
-                <div className="mubi-product-info">
-                  <span>{p.categoria || 'MUBI'}</span>
-                  <h3>{p.nombre}</h3>
-                  <p>{p.descripcion || 'Polo personalizable con diseño a elección del cliente.'}</p>
-
-                  <div>
-                    <strong>S/ {Number(p.precio || 0).toFixed(2)}</strong>
-                    <button className="btn btn-sm btn-primary" onClick={() => pedirProducto(p)}>
-                      Pedir
-                    </button>
+                    {img ? (
+                      <img src={img} alt={p.nombre} />
+                    ) : (
+                      <i className="bi bi-bag-heart-fill"></i>
+                    )}
                   </div>
-                </div>
-              </article>
-                );
-})}
+
+                  <div className="mubi-product-info">
+                    <span>{p.categoria || 'MUBI'}</span>
+                    <h3>{p.nombre}</h3>
+                    <p>{p.descripcion || 'Polo personalizable con diseño a elección del cliente.'}</p>
+
+                    <div className="commercial-rating">
+                      <i className="bi bi-star-fill"></i>
+                      <i className="bi bi-star-fill"></i>
+                      <i className="bi bi-star-fill"></i>
+                      <i className="bi bi-star-fill"></i>
+                      <i className="bi bi-star-half"></i>
+                      <small>Personalizable</small>
+                    </div>
+
+                    <div>
+                      <strong>S/ {Number(p.precio || 0).toFixed(2)}</strong>
+                      <button className="btn btn-sm btn-primary" onClick={() => pedirProducto(p)}>
+                        Pedir ahora
+                      </button>
+                    </div>
+                  </div>
+                </article>
+              );
+            })}
 
             {!productosDestacados.length && (
-              <article className="mubi-product-card">
+              <article className="mubi-product-card commercial-product-card">
                 <div className="mubi-product-img">
                   <i className="bi bi-bag-heart-fill"></i>
                 </div>
@@ -285,6 +312,36 @@ export default function Dashboard({ role, user }) {
               </article>
             )}
           </div>
+
+          <div className="commercial-more-actions">
+            <a href="/productos" className="btn btn-primary">
+              Ver catálogo completo
+            </a>
+            <a href="#pedido-rapido" className="btn btn-glass">
+              Cotizar pedido especial
+            </a>
+          </div>
+        </section>
+
+        <section className="mubi-promo-grid">
+          <article className="mubi-promo-card large">
+            <span>Promociones y colegios</span>
+            <h2>Pedidos por grupos, equipos y eventos.</h2>
+            <p>Sube tu lista de tallas, nombres y números desde Excel o completa la personalización por filas.</p>
+            <a href="/productos" className="btn btn-primary">Explorar diseños</a>
+          </article>
+
+          <article className="mubi-promo-card">
+            <i className="bi bi-whatsapp"></i>
+            <strong>Atención rápida</strong>
+            <p>Consulta disponibilidad y seguimiento desde la web.</p>
+          </article>
+
+          <article className="mubi-promo-card">
+            <i className="bi bi-credit-card-2-front"></i>
+            <strong>Pagos flexibles</strong>
+            <p>Adelantos, pagos parciales y saldo pendiente.</p>
+          </article>
         </section>
 
         <section className="quick-order-card" id="pedido-rapido">
@@ -314,20 +371,48 @@ export default function Dashboard({ role, user }) {
           </div>
         </section>
 
-        <footer className="mubi-footer">
-          <div>
+        <footer className="mubi-footer mubi-footer-pro">
+          <div className="footer-brand-block">
             <h2>MUBI</h2>
-            <p>Polos personalizados para promociones, equipos y eventos.</p>
+            <p>Polos sublimados y personalizados para promociones, equipos, colegios y eventos.</p>
+            <div className="footer-socials">
+              <a href="https://www.facebook.com/" target="_blank" rel="noreferrer" aria-label="Facebook">
+                <i className="bi bi-facebook"></i>
+              </a>
+              <a href="https://www.instagram.com/mubi_textil?igsh=b3R1ZndhenJncTk3" target="_blank" rel="noreferrer" aria-label="Instagram">
+                <i className="bi bi-instagram"></i>
+              </a>
+              <a href="https://www.tiktok.com/@mubi_textil?_r=1&_t=ZS-96Wt2VySz0X" target="_blank" rel="noreferrer" aria-label="TikTok">
+                <i className="bi bi-tiktok"></i>
+              </a>
+              <a href="https://wa.me/51907530218" target="_blank" rel="noreferrer" aria-label="WhatsApp">
+                <i className="bi bi-whatsapp"></i>
+              </a>
+            </div>
           </div>
 
           <div>
-            <strong>Productos</strong>
-            <p>Escolares, deportivos sublimados y diseños personalizados.</p>
+            <strong>Enlaces rápidos</strong>
+            <a href="/productos">Catálogo</a>
+            <a href="/carrito">Carrito</a>
+            <a href="#pedido-rapido">Pedido rápido</a>
+            <a href="/contacto">Contacto</a>
           </div>
 
           <div>
             <strong>Atención</strong>
-            <p>Revisión del pedido, diseño y seguimiento desde la web.</p>
+            <p><i className="bi bi-clock"></i> Lun - Sáb: 9:00 a.m. - 6:00 p.m.</p>
+            <p><i className="bi bi-geo-alt"></i> Pucallpa, Perú</p>
+          </div>
+
+          <div>
+            <strong>Pagos</strong>
+            <p>Yape, Plin, transferencia y pagos parciales.</p>
+            <div className="footer-payments">
+              <span>Yape</span>
+              <span>Plin</span>
+              <span>Transferencia</span>
+            </div>
           </div>
         </footer>
       </div>

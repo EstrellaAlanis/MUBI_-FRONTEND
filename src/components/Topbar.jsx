@@ -1,11 +1,50 @@
+import { useEffect, useMemo, useState } from 'react';
 import { Link, NavLink } from 'react-router-dom';
+import { api, endpoints } from '../services/api.js';
 
 export default function Topbar({ role, user, onLogout }) {
+  const [pedidos, setPedidos] = useState([]);
+  const [openNotifications, setOpenNotifications] = useState(false);
+
+  useEffect(() => {
+    if (role !== 'admin') return;
+
+    const loadPedidos = async () => {
+      try {
+        const data = await api.get(endpoints.pedidos);
+        setPedidos(Array.isArray(data) ? data : []);
+      } catch {
+        setPedidos([]);
+      }
+    };
+
+    loadPedidos();
+
+    const interval = setInterval(loadPedidos, 30000);
+
+    window.addEventListener('mubi-admin-refresh', loadPedidos);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('mubi-admin-refresh', loadPedidos);
+    };
+  }, [role]);
+
+  const pedidosPendientes = useMemo(() => {
+    return pedidos
+      .filter(p => String(p.estadoPedido || '').toLowerCase() === 'pendiente')
+      .sort((a, b) => new Date(a.fechaPedido || 0) - new Date(b.fechaPedido || 0));
+  }, [pedidos]);
+
+  const ultimosPendientes = pedidosPendientes.slice(0, 5);
+
   if (role !== 'admin') {
     return (
       <header className="client-web-navbar">
         <Link to="/" className="client-brand">
-          <div className="client-brand-logo"> <img src="public/img/image.png" alt="50px" width="50px" /></div>
+          <div className="client-brand-logo">
+            <img src="public/img/image.png" alt="MUBI" width="50px" />
+          </div>
           <div>
             <strong>MUBI</strong>
             <span>Textil Store</span>
@@ -32,6 +71,7 @@ export default function Topbar({ role, user, onLogout }) {
           <Link className="client-cart-btn" to="/carrito" aria-label="Carrito">
             <i className="bi bi-cart3"></i>
           </Link>
+
           {user ? (
             <>
               <span className="client-session">
@@ -56,13 +96,70 @@ export default function Topbar({ role, user, onLogout }) {
   }
 
   return (
-    <header className="topbar">
+    <header className="topbar admin-topbar">
       <div>
         <p className="eyebrow">MUBI Plataforma Web</p>
-        <h2>Panel exclusivo del administrador / dueño</h2>
+        <h2>Centro de control administrativo</h2>
+        <small className="admin-topbar-subtitle">
+          Supervisa pedidos, clientes, pagos y comprobantes desde una vista de gestión.
+        </small>
       </div>
 
-      <div className="topbar-actions">
+      <div className="topbar-actions admin-topbar-actions">
+        <div className="admin-notification-wrap">
+          <button
+            className={`admin-notification-btn ${pedidosPendientes.length ? 'has-alert' : ''}`}
+            type="button"
+            onClick={() => setOpenNotifications(!openNotifications)}
+            aria-label="Notificaciones"
+          >
+            <i className="bi bi-bell-fill"></i>
+            {pedidosPendientes.length > 0 && <span>{pedidosPendientes.length}</span>}
+          </button>
+
+          {openNotifications && (
+            <div className="admin-notification-panel">
+              <div className="admin-notification-header">
+                <strong>Pedidos pendientes</strong>
+                <small>{pedidosPendientes.length} en cola FIFO</small>
+              </div>
+
+              {ultimosPendientes.length ? (
+                <div className="admin-notification-list">
+                  {ultimosPendientes.map((p, index) => (
+                    <Link
+                      key={p.idPedido}
+                      to="/pedidos"
+                      className="admin-notification-item"
+                      onClick={() => setOpenNotifications(false)}
+                    >
+                      <span className={index === 0 ? 'next-order-dot urgent' : 'next-order-dot'}></span>
+                      <div>
+                        <strong>Pedido #{p.idPedido}</strong>
+                        <small>{p.cliente || `Cliente #${p.idCliente}`}</small>
+                      </div>
+                      {index === 0 && <em>Siguiente</em>}
+                    </Link>
+                  ))}
+                </div>
+              ) : (
+                <div className="admin-notification-empty">
+                  <i className="bi bi-check2-circle"></i>
+                  No hay pedidos pendientes.
+                </div>
+              )}
+
+              <Link
+                to="/pedidos"
+                className="admin-notification-footer"
+                onClick={() => setOpenNotifications(false)}
+              >
+                Ir a gestión de pedidos
+              </Link>
+            </div>
+          )}
+        </div>
+
         <span className="session-chip admin">
           <i className="bi bi-person-gear"></i>
           {user ? `${user.nombre} · admin` : 'Administrador'}
