@@ -6919,3 +6919,596 @@ textarea {
     grid-column: 2;
   }
 }
+/* ===== RESPONSIVE MULTIPLATAFORMA FINAL ===== */
+
+html,
+body,
+#root {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+img,
+video,
+canvas,
+svg {
+  max-width: 100%;
+}
+
+.table-responsive,
+.admin-dark-table-wrap {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* ===== TOPBAR CLIENTE RESPONSIVE ===== */
+.client-navbar-main-row {
+  display: contents;
+}
+
+.client-mobile-actions {
+  display: none;
+  align-items: center;
+  gap: 10px;
+}
+
+.client-menu-toggle {
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  border: 1px solid rgba(89, 255, 0, .24);
+  background: rgba(255, 255, 255, .72);
+  color: var(--text);
+  display: grid;
+  place-items: center;
+  font-size: 20px;
+  font-weight: 900;
+}
+
+.client-menu-toggle.active {
+  background: linear-gradient(135deg, #59ff00, #00c853);
+  color: #071008;
+}
+
+.desktop-cart-btn {
+  display: grid;
+}
+
+/* ===== ADMIN RESPONSIVE ===== */
+.responsive-admin-sidebar .brand-text {
+  min-width: 0;
+}
+
+.responsive-admin-topbar {
+  gap: 14px;
+}
+
+.admin-topbar-title {
+  min-width: 0;
+}
+
+.admin-topbar-title h2,
+.admin-topbar-title small {
+  overflow-wrap: anywhere;
+}
+
+.panel-card,
+.report-card,
+.admin-kpi-card,
+.product-card,
+.mubi-product-card,
+.client-order-card,
+.login-card {
+  min-width: 0;
+}
+
+.admin-dark-table {
+  white-space: nowrap;
+}
+
+.admin-management-modal,
+.pedido-modal {
+  max-width: min(940px, calc(100vw - 24px));
+}
+
+/* ===== TABLET ===== */
+@media (max-width: 1180px) {
+  .content-area {
+    padding: 24px 20px 42px;
+  }
+
+  .product-grid,
+  .mubi-product-showcase,
+  .commercial-product-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .admin-dashboard-grid,
+  .client-order-layout,
+  .quick-order-card,
+  .login-screen {
+    grid-template-columns: 1fr !important;
+  }
+
+  .admin-stats-grid,
+  .admin-kpi-grid,
+  .stats-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .admin-shortcuts,
+  .admin-control-shortcuts {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
+/* ===== CELULAR GRANDE ===== */
+@media (max-width: 820px) {
+  .app-shell {
+    display: block;
+  }
+
+  .content-area {
+    padding: 18px 14px 34px;
+  }
+
+  .admin-mode .responsive-admin-sidebar,
+  .admin-mode .sidebar {
+    position: sticky;
+    top: 0;
+    z-index: 120;
+    width: 100%;
+    height: auto;
+    max-height: none;
+    padding: 10px 12px;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 10px;
+    overflow: visible;
+    border-right: 0;
+    border-bottom: 1px solid rgba(89, 255, 0, .18);
+  }
+
+  .admin-mode .responsive-admin-sidebar .brand,
+  .admin-mode .sidebar .brand {
+    min-width: 62px;
+  }
+
+  .admin-mode .responsive-admin-sidebar .brand-logo,
+  .admin-mode .sidebar .brand-logo {
+    width: 48px;
+    height: 48px;
+    border-radius: 16px;
+  }
+
+  .admin-mode .responsive-admin-sidebar .brand-text,
+  .admin-mode .sidebar .brand div:not(.brand-logo),
+  .admin-mode .sidebar-card {
+    display: none !important;
+  }
+
+  .admin-mode .responsive-admin-sidebar .nav-list,
+  .admin-mode .sidebar .nav-list {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 2px 0 8px;
+    scrollbar-width: thin;
+  }
+
+  .admin-mode .responsive-admin-sidebar .nav-item,
+  .admin-mode .sidebar .nav-item {
+    min-width: 70px;
+    flex: 0 0 auto;
+    justify-content: center;
+    padding: 10px 12px;
+    border-radius: 16px;
+  }
+
+  .admin-mode .responsive-admin-sidebar .nav-item span,
+  .admin-mode .sidebar .nav-item span {
+    display: none !important;
+  }
+
+  .admin-mode .responsive-admin-sidebar .nav-item i,
+  .admin-mode .sidebar .nav-item i {
+    font-size: 21px;
+  }
+
+  .responsive-admin-topbar,
+  .topbar {
+    position: sticky;
+    top: 70px;
+    z-index: 110;
+    padding: 14px;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .admin-topbar-title h2 {
+    font-size: 18px;
+  }
+
+  .admin-topbar-subtitle {
+    font-size: 12px;
+  }
+
+  .admin-topbar-actions,
+  .topbar-actions {
+    width: 100%;
+    justify-content: space-between;
+    border-radius: 22px;
+    flex-wrap: wrap;
+  }
+
+  .admin-notification-wrap {
+    order: -1;
+  }
+
+  .admin-notification-panel {
+    position: fixed;
+    top: 140px;
+    left: 12px;
+    right: 12px;
+    width: auto;
+    max-height: calc(100vh - 160px);
+    overflow-y: auto;
+  }
+
+  .session-chip.admin {
+    max-width: calc(100vw - 130px);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .responsive-client-navbar,
+  .client-web-navbar {
+    padding: 10px 14px;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+    align-items: stretch;
+  }
+
+  .client-navbar-main-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .client-mobile-actions {
+    display: flex;
+  }
+
+  .desktop-cart-btn {
+    display: none !important;
+  }
+
+  .client-brand-logo {
+    width: 46px;
+    height: 46px;
+    border-radius: 16px;
+  }
+
+  .client-brand strong {
+    font-size: 20px;
+  }
+
+  .client-menu {
+    display: none;
+    width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+    background:
+      radial-gradient(circle at 95% 0%, rgba(89, 255, 0, .12), transparent 30%),
+      rgba(7, 16, 8, .96);
+    border: 1px solid rgba(89, 255, 0, .18);
+    border-radius: 20px;
+    padding: 10px;
+    overflow: visible;
+  }
+
+  .client-menu.open {
+    display: flex;
+  }
+
+  .client-menu a {
+    color: #f4fff0;
+    padding: 12px 14px;
+    border-radius: 14px;
+  }
+
+  .client-menu a.active,
+  .client-menu a:hover {
+    background: rgba(89, 255, 0, .12);
+    color: #86ff61;
+  }
+
+  .client-menu a.active::after {
+    display: none;
+  }
+
+  .client-navbar-actions {
+    display: none;
+    width: 100%;
+    align-items: stretch;
+    gap: 8px;
+    background:
+      radial-gradient(circle at 95% 0%, rgba(89, 255, 0, .10), transparent 32%),
+      rgba(7, 16, 8, .96);
+    border: 1px solid rgba(89, 255, 0, .18);
+    border-radius: 20px;
+    padding: 10px;
+  }
+
+  .client-navbar-actions.open {
+    display: grid;
+  }
+
+  .client-session,
+  .client-login-btn {
+    justify-content: center;
+    width: 100%;
+  }
+
+  .mubi-video-hero {
+    min-height: 520px;
+    padding: 58px 20px;
+  }
+
+  .mubi-web-hero h1,
+  .mubi-client-hero h1 {
+    font-size: clamp(32px, 11vw, 48px);
+  }
+
+  .mubi-section,
+  .mubi-promo-grid,
+  .quick-order-card,
+  .mubi-footer {
+    padding-left: 18px;
+    padding-right: 18px;
+  }
+
+  .product-grid,
+  .mubi-product-showcase,
+  .commercial-product-grid {
+    width: min(100%, calc(100% - 28px));
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+
+  .catalog-banner,
+  .website-mode .page-header,
+  .search-access-box,
+  .client-orders-page,
+  .client-create-order-page {
+    width: min(100%, calc(100% - 28px));
+  }
+
+  .search-access-box {
+    grid-template-columns: 1fr;
+  }
+
+  .search-suggestions {
+    left: 14px;
+    right: 14px;
+    top: 100%;
+  }
+
+  .quick-order-card {
+    width: min(100%, calc(100% - 28px));
+    grid-template-columns: 1fr;
+  }
+
+  .mubi-footer,
+  .mubi-footer-pro {
+    grid-template-columns: 1fr !important;
+  }
+
+  .form-grid,
+  .simple-form-grid,
+  .client-upload-area,
+  .login-form-grid,
+  .admin-detail-grid,
+  .pedido-detail-grid,
+  .modal-design-grid,
+  .client-order-summary {
+    grid-template-columns: 1fr !important;
+  }
+
+  .filter-bar,
+  .section-actions,
+  .admin-list-header,
+  .admin-toolbar,
+  .admin-action-grid,
+  .form-actions {
+    flex-direction: column;
+    align-items: stretch;
+    display: flex;
+  }
+
+  .admin-toolbar {
+    display: grid;
+    grid-template-columns: 1fr !important;
+  }
+
+  .section-actions .btn,
+  .filter-bar .btn,
+  .admin-action-grid .btn,
+  .form-actions .btn {
+    width: 100%;
+  }
+
+  .pedido-modal {
+    width: calc(100vw - 22px);
+    max-height: 86vh;
+    padding: 16px;
+    border-radius: 20px;
+  }
+
+  .pedido-modal-header {
+    flex-direction: column;
+  }
+
+  .modal-backdrop-custom {
+    padding: 10px;
+    align-items: start;
+  }
+
+  .login-screen {
+    padding: 18px;
+  }
+
+  .login-brand-panel {
+    min-height: auto;
+    padding: 28px;
+  }
+
+  .login-card {
+    padding: 24px;
+  }
+}
+
+/* ===== CELULAR PEQUEÑO ===== */
+@media (max-width: 520px) {
+  .content-area {
+    padding: 14px 10px 30px;
+  }
+
+  .admin-stats-grid,
+  .admin-kpi-grid,
+  .stats-grid,
+  .admin-shortcuts,
+  .admin-control-shortcuts,
+  .client-action-grid,
+  .material-grid,
+  .order-status-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .admin-control-hero,
+  .admin-dashboard-hero,
+  .hero-card,
+  .client-hero,
+  .mubi-client-hero {
+    padding: 20px !important;
+    border-radius: 24px;
+  }
+
+  .admin-control-hero h1,
+  .admin-dashboard-hero h1,
+  .hero-card h1 {
+    font-size: 32px;
+  }
+
+  .page-header {
+    align-items: flex-start;
+  }
+
+  .page-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 18px;
+  }
+
+  .panel-card {
+    padding: 18px;
+    border-radius: 22px;
+  }
+
+  .report-card,
+  .admin-kpi-card {
+    padding: 18px;
+  }
+
+  .product-art,
+  .mubi-product-img {
+    height: 230px;
+  }
+
+  .product-body,
+  .mubi-product-info {
+    padding: 18px;
+  }
+
+  .product-footer,
+  .mubi-product-info div {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .product-footer .btn,
+  .mubi-product-info .btn {
+    width: 100%;
+  }
+
+  .client-order-top,
+  .client-orders-hero {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .admin-chart-box {
+    height: 240px;
+    padding: 8px;
+  }
+
+  .admin-queue-item,
+  .fifo-item {
+    grid-template-columns: 36px 1fr !important;
+  }
+
+  .admin-queue-item em,
+  .fifo-actions {
+    grid-column: 1 / -1;
+  }
+
+  .table-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .table-actions .btn {
+    width: 100%;
+  }
+
+  .client-login-btn,
+  .btn {
+    min-height: 44px;
+  }
+}
+
+/* ===== EXTRA PEQUEÑO ===== */
+@media (max-width: 380px) {
+  .client-brand strong {
+    font-size: 18px;
+  }
+
+  .client-brand span,
+  .admin-topbar-subtitle {
+    display: none;
+  }
+
+  .client-brand-logo,
+  .admin-mode .responsive-admin-sidebar .brand-logo,
+  .admin-mode .sidebar .brand-logo {
+    width: 42px;
+    height: 42px;
+  }
+
+  .mubi-video-hero {
+    min-height: 480px;
+  }
+
+  .mubi-web-hero h1,
+  .mubi-client-hero h1 {
+    font-size: 30px;
+  }
+
+  .login-card {
+    padding: 18px;
+  }
+}

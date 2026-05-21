@@ -5,6 +5,7 @@ import { api, endpoints } from '../services/api.js';
 export default function Topbar({ role, user, onLogout }) {
   const [pedidos, setPedidos] = useState([]);
   const [openNotifications, setOpenNotifications] = useState(false);
+  const [openClientMenu, setOpenClientMenu] = useState(false);
 
   useEffect(() => {
     if (role !== 'admin') return;
@@ -19,9 +20,7 @@ export default function Topbar({ role, user, onLogout }) {
     };
 
     loadPedidos();
-
     const interval = setInterval(loadPedidos, 30000);
-
     window.addEventListener('mubi-admin-refresh', loadPedidos);
 
     return () => {
@@ -29,6 +28,11 @@ export default function Topbar({ role, user, onLogout }) {
       window.removeEventListener('mubi-admin-refresh', loadPedidos);
     };
   }, [role]);
+
+  useEffect(() => {
+    setOpenClientMenu(false);
+    setOpenNotifications(false);
+  }, [role, user]);
 
   const pedidosPendientes = useMemo(() => {
     return pedidos
@@ -38,37 +42,56 @@ export default function Topbar({ role, user, onLogout }) {
 
   const ultimosPendientes = pedidosPendientes.slice(0, 5);
 
+  const closeClientMenu = () => setOpenClientMenu(false);
+
   if (role !== 'admin') {
     return (
-      <header className="client-web-navbar">
-        <Link to="/" className="client-brand">
-          <div className="client-brand-logo">
-            <img src="public/img/image.png" alt="MUBI" width="50px" />
-          </div>
-          <div>
-            <strong>MUBI</strong>
-            <span>Textil Store</span>
-          </div>
-        </Link>
+      <header className="client-web-navbar responsive-client-navbar">
+        <div className="client-navbar-main-row">
+          <Link to="/" className="client-brand" onClick={closeClientMenu}>
+            <div className="client-brand-logo">
+              <img src="public/img/image.png" alt="MUBI" width="50px" />
+            </div>
+            <div>
+              <strong>MUBI</strong>
+              <span>Textil Store</span>
+            </div>
+          </Link>
 
-        <nav className="client-menu">
-          <NavLink to="/">Inicio</NavLink>
-          <NavLink to="/productos">Catálogo</NavLink>
-          <NavLink to="/carrito">Carrito</NavLink>
-          <NavLink to="/pedido-personalizado">Hacer pedido</NavLink>
+          <div className="client-mobile-actions">
+            <Link className="client-cart-btn" to="/carrito" aria-label="Carrito" onClick={closeClientMenu}>
+              <i className="bi bi-cart3"></i>
+            </Link>
+
+            <button
+              className={`client-menu-toggle ${openClientMenu ? 'active' : ''}`}
+              type="button"
+              onClick={() => setOpenClientMenu(!openClientMenu)}
+              aria-label="Abrir menú"
+            >
+              <i className={`bi ${openClientMenu ? 'bi-x-lg' : 'bi-list'}`}></i>
+            </button>
+          </div>
+        </div>
+
+        <nav className={`client-menu ${openClientMenu ? 'open' : ''}`}>
+          <NavLink to="/" onClick={closeClientMenu}>Inicio</NavLink>
+          <NavLink to="/productos" onClick={closeClientMenu}>Catálogo</NavLink>
+          <NavLink to="/carrito" onClick={closeClientMenu}>Carrito</NavLink>
+          <NavLink to="/pedido-personalizado" onClick={closeClientMenu}>Hacer pedido</NavLink>
 
           {user && (
             <>
-              <NavLink to="/pedidos">Mis pedidos</NavLink>
-              <NavLink to="/pagos">Mis pagos</NavLink>
+              <NavLink to="/pedidos" onClick={closeClientMenu}>Mis pedidos</NavLink>
+              <NavLink to="/pagos" onClick={closeClientMenu}>Mis pagos</NavLink>
             </>
           )}
 
-          <NavLink to="/contacto">Contacto</NavLink>
+          <NavLink to="/contacto" onClick={closeClientMenu}>Contacto</NavLink>
         </nav>
 
-        <div className="client-navbar-actions">
-          <Link className="client-cart-btn" to="/carrito" aria-label="Carrito">
+        <div className={`client-navbar-actions ${openClientMenu ? 'open' : ''}`}>
+          <Link className="client-cart-btn desktop-cart-btn" to="/carrito" aria-label="Carrito">
             <i className="bi bi-cart3"></i>
           </Link>
 
@@ -79,13 +102,20 @@ export default function Topbar({ role, user, onLogout }) {
                 {user.nombre || 'Cliente'}
               </span>
 
-              <button className="client-login-btn outline" type="button" onClick={onLogout}>
+              <button
+                className="client-login-btn outline"
+                type="button"
+                onClick={() => {
+                  closeClientMenu();
+                  onLogout();
+                }}
+              >
                 <i className="bi bi-box-arrow-right"></i>
                 Salir
               </button>
             </>
           ) : (
-            <Link className="client-login-btn" to="/login">
+            <Link className="client-login-btn" to="/login" onClick={closeClientMenu}>
               <i className="bi bi-shield-lock"></i>
               Iniciar sesión
             </Link>
@@ -96,8 +126,8 @@ export default function Topbar({ role, user, onLogout }) {
   }
 
   return (
-    <header className="topbar admin-topbar">
-      <div>
+    <header className="topbar admin-topbar responsive-admin-topbar">
+      <div className="admin-topbar-title">
         <p className="eyebrow">MUBI Plataforma Web</p>
         <h2>Centro de control administrativo</h2>
         <small className="admin-topbar-subtitle">

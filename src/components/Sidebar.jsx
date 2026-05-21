@@ -32,10 +32,10 @@ export default function Sidebar({ role = 'cliente', user }) {
   const links = role === 'admin' ? adminLinks : user ? clientLinks : publicLinks;
 
   return (
-    <aside className="sidebar">
+    <aside className="sidebar responsive-admin-sidebar">
       <div className="brand">
         <div className="brand-logo">M</div>
-        <div>
+        <div className="brand-text">
           <h1>MUBI</h1>
           <span>
             {role === 'admin'
@@ -47,11 +47,12 @@ export default function Sidebar({ role = 'cliente', user }) {
         </div>
       </div>
 
-      <nav className="nav-list">
+      <nav className="nav-list" aria-label="Navegación principal">
         {links.map(([to, icon, label]) => (
           <NavLink
             key={to}
             to={to}
+            title={label}
             className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
           >
             <i className={`bi ${icon}`}></i>
