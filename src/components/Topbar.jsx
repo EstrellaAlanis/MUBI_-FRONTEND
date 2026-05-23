@@ -6,6 +6,19 @@ export default function Topbar({ role, user, onLogout }) {
   const [pedidos, setPedidos] = useState([]);
   const [openNotifications, setOpenNotifications] = useState(false);
   const [openClientMenu, setOpenClientMenu] = useState(false);
+  const [cartCount, setCartCount] = useState(0);
+
+  const getCartCount = () => {
+    try {
+      const cart = JSON.parse(localStorage.getItem('mubiCart') || '[]');
+      return Array.isArray(cart)
+        ? cart.reduce((acc, item) => acc + Number(item.cantidad || 1), 0)
+        : 0;
+    } catch {
+      return 0;
+    }
+  };
+
 
   useEffect(() => {
     if (role !== 'admin') return;
@@ -28,6 +41,20 @@ export default function Topbar({ role, user, onLogout }) {
       window.removeEventListener('mubi-admin-refresh', loadPedidos);
     };
   }, [role]);
+
+  useEffect(() => {
+    const updateCartCount = () => setCartCount(getCartCount());
+
+    updateCartCount();
+
+    window.addEventListener('mubi-cart-updated', updateCartCount);
+    window.addEventListener('storage', updateCartCount);
+
+    return () => {
+      window.removeEventListener('mubi-cart-updated', updateCartCount);
+      window.removeEventListener('storage', updateCartCount);
+    };
+  }, []);
 
   useEffect(() => {
     setOpenClientMenu(false);
@@ -61,6 +88,7 @@ export default function Topbar({ role, user, onLogout }) {
           <div className="client-mobile-actions">
             <Link className="client-cart-btn" to="/carrito" aria-label="Carrito" onClick={closeClientMenu}>
               <i className="bi bi-cart3"></i>
+              {cartCount > 0 && <span>{cartCount}</span>}
             </Link>
 
             <button
@@ -93,6 +121,7 @@ export default function Topbar({ role, user, onLogout }) {
         <div className={`client-navbar-actions ${openClientMenu ? 'open' : ''}`}>
           <Link className="client-cart-btn desktop-cart-btn" to="/carrito" aria-label="Carrito">
             <i className="bi bi-cart3"></i>
+            {cartCount > 0 && <span>{cartCount}</span>}
           </Link>
 
           {user ? (

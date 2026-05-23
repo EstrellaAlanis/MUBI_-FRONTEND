@@ -161,16 +161,20 @@ export default function Dashboard({ role, user }) {
   };
 
 const pedirProducto = (p) => {
+  const imagen = p.rutaImagenPrincipal
+    ? String(p.rutaImagenPrincipal).startsWith('http')
+      ? p.rutaImagenPrincipal
+      : `http://localhost:5071${p.rutaImagenPrincipal}`
+    : '';
+
   const item = {
-    cartId: `${p.idProducto}-${Date.now()}`,
+    cartId: `${p.idProducto}-base`,
     idProducto: p.idProducto,
     nombre: p.nombre,
     descripcion: p.descripcion || 'Producto personalizable según tu diseño.',
     categoria: p.categoria || 'MUBI',
     precio: Number(p.precio || 0),
-    imagen: p.rutaImagenPrincipal
-      ? `http://localhost:5071${p.rutaImagenPrincipal}`
-      : '',
+    imagen,
     talla: 'M',
     color: 'Negro',
     cantidad: 1,
@@ -178,7 +182,21 @@ const pedirProducto = (p) => {
   };
 
   const cart = JSON.parse(localStorage.getItem('mubiCart') || '[]');
-  const nextCart = [...cart, item];
+
+  const existe = cart.find(x =>
+    Number(x.idProducto) === Number(item.idProducto) &&
+    String(x.talla || 'M') === 'M' &&
+    String(x.color || 'Negro').toLowerCase() === 'negro' &&
+    (!Array.isArray(x.personalizados) || x.personalizados.length === 0)
+  );
+
+  const nextCart = existe
+    ? cart.map(x =>
+        x.cartId === existe.cartId
+          ? { ...x, cantidad: Number(x.cantidad || 1) + 1 }
+          : x
+      )
+    : [...cart, item];
 
   localStorage.setItem('mubiCart', JSON.stringify(nextCart));
   window.dispatchEvent(new Event('mubi-cart-updated'));
