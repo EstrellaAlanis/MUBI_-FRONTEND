@@ -7512,3 +7512,250 @@ svg {
     padding: 18px;
   }
 }
+/* ===== CATÁLOGO MÁS COMERCIAL Y COMPACTO ===== */
+/* Pegar al final de src/styles/app.css */
+
+/* Reduce el bloque grande de catálogo */
+.website-mode .page-header,
+.catalog-banner {
+  width: min(1120px, calc(100% - 48px));
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.catalog-banner {
+  min-height: auto !important;
+  padding: 34px 36px !important;
+  border-radius: 28px !important;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 22px;
+  background:
+    radial-gradient(circle at 95% 0%, rgba(89, 255, 0, .16), transparent 34%),
+    linear-gradient(135deg, rgba(8, 17, 12, .96), rgba(13, 32, 19, .92)) !important;
+}
+
+.catalog-banner h2 {
+  max-width: 760px;
+  font-size: clamp(30px, 4.4vw, 54px) !important;
+  line-height: .98 !important;
+  margin: 16px 0 12px !important;
+  letter-spacing: -.04em;
+}
+
+.catalog-banner p {
+  max-width: 760px;
+  font-size: 16px !important;
+  line-height: 1.55 !important;
+  margin-bottom: 0 !important;
+}
+
+.catalog-banner .btn {
+  white-space: nowrap;
+  min-width: 140px;
+}
+
+/* Buscador más compacto */
+.search-access-box {
+  width: min(1120px, calc(100% - 48px));
+  margin-left: auto;
+  margin-right: auto;
+  padding: 16px !important;
+  border-radius: 24px !important;
+  gap: 14px !important;
+}
+
+.search-access-box .form-control,
+.search-access-box .form-select {
+  min-height: 48px !important;
+  border-radius: 16px !important;
+}
+
+/* Cards de productos más pequeñas y ordenadas */
+.product-grid {
+  width: min(1120px, calc(100% - 48px)) !important;
+  grid-template-columns: repeat(auto-fit, minmax(245px, 1fr)) !important;
+  gap: 18px !important;
+  margin-top: 26px !important;
+}
+
+.product-card,
+.product-card-premium {
+  border-radius: 24px !important;
+  max-width: 100%;
+}
+
+.product-card-premium:hover,
+.product-card:hover {
+  transform: translateY(-4px) !important;
+}
+
+/* Imagen centrada y más limpia */
+.product-art,
+.product-art-real {
+  height: 210px !important;
+  background:
+    radial-gradient(circle at 50% 16%, rgba(89, 255, 0, .18), transparent 36%),
+    linear-gradient(135deg, #071008, #132019) !important;
+}
+
+.product-art-real img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: contain !important;
+  object-position: center !important;
+  padding: 10px !important;
+}
+
+/* Para imágenes tipo foto completa que necesitan llenar sin cortar demasiado */
+.product-card:nth-child(odd) .product-art-real img {
+  object-fit: cover !important;
+  padding: 0 !important;
+}
+
+/* Contenido más compacto */
+.product-body {
+  padding: 16px !important;
+}
+
+.product-tags {
+  gap: 6px !important;
+  margin-bottom: 8px;
+}
+
+.product-tags .status-pill,
+.product-tags .category-pill {
+  padding: 5px 9px !important;
+  font-size: 11px !important;
+}
+
+.product-body h3 {
+  font-size: 20px !important;
+  line-height: 1.05 !important;
+  margin: 8px 0 6px !important;
+  min-height: 42px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.product-body p {
+  font-size: 14px !important;
+  line-height: 1.4 !important;
+  min-height: 40px !important;
+  margin-bottom: 0 !important;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.product-footer {
+  margin-top: 12px !important;
+  padding-top: 12px !important;
+  gap: 10px !important;
+}
+
+.product-footer strong {
+  font-size: 21px !important;
+}
+
+.product-card-actions {
+  gap: 8px !important;
+}
+
+.product-card-actions .btn {
+  padding: 9px 12px !important;
+  border-radius: 14px !important;
+  font-size: 13px !important;
+}
+
+/* Modal de producto un poco más compacto */
+.product-option-modal {
+  width: min(900px, 100%) !important;
+}
+
+.product-option-image {
+  min-height: 470px !important;
+}
+
+.product-option-image img {
+  object-fit: contain !important;
+  padding: 18px !important;
+}
+
+.product-option-content {
+  padding: 34px !important;
+}
+
+.product-option-content h2 {
+  font-size: clamp(26px, 3.5vw, 40px) !important;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+  .catalog-banner {
+    grid-template-columns: 1fr;
+    padding: 28px !important;
+  }
+
+  .catalog-banner h2 {
+    font-size: clamp(30px, 8vw, 44px) !important;
+  }
+
+  .product-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    width: min(100%, calc(100% - 28px)) !important;
+  }
+
+  .product-art,
+  .product-art-real {
+    height: 190px !important;
+  }
+}
+
+@media (max-width: 560px) {
+  .website-mode .page-header,
+  .catalog-banner,
+  .search-access-box {
+    width: min(100%, calc(100% - 24px)) !important;
+  }
+
+  .catalog-banner {
+    padding: 22px !important;
+    border-radius: 22px !important;
+  }
+
+  .catalog-banner h2 {
+    font-size: 32px !important;
+  }
+
+  .catalog-banner p {
+    font-size: 14px !important;
+  }
+
+  .product-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .product-card {
+    max-width: 360px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .product-art,
+  .product-art-real {
+    height: 205px !important;
+  }
+
+  .product-footer {
+    align-items: stretch !important;
+  }
+
+  .product-card-actions {
+    width: 100%;
+  }
+}
