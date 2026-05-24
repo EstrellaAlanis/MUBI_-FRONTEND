@@ -7850,3 +7850,124 @@ svg {
     width: 100%;
   }
 }
+/* ===== MODAL DE VALIDACIÓN / CARGA LOGIN ===== */
+
+.auth-loading-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(0, 0, 0, .72);
+  backdrop-filter: blur(8px);
+}
+
+.auth-loading-modal {
+  width: min(420px, 100%);
+  text-align: center;
+  border-radius: 28px;
+  padding: 34px 28px;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(89, 255, 0, .18), transparent 42%),
+    linear-gradient(145deg, #101713, #060907);
+  border: 1px solid rgba(89, 255, 0, .30);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, .55);
+}
+
+.auth-loading-spinner {
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 18px;
+  border-radius: 999px;
+  border: 5px solid rgba(89, 255, 0, .18);
+  border-top-color: #59ff00;
+  animation: mubiSpin 1s linear infinite;
+}
+
+.auth-loading-modal h3 {
+  color: #f4fff0;
+  font-size: 24px;
+  font-weight: 900;
+  margin: 0 0 8px;
+}
+
+.auth-loading-modal p {
+  color: rgba(244, 255, 240, .72);
+  margin: 0;
+  line-height: 1.5;
+}
+
+@keyframes mubiSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+/* ===== LOGIN: MODAL DE CARGA Y RECUPERACIÓN ===== */
+
+.auth-loading-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(0, 0, 0, .72);
+  backdrop-filter: blur(8px);
+}
+
+.auth-loading-modal {
+  width: min(420px, 100%);
+  text-align: center;
+  border-radius: 28px;
+  padding: 34px 28px;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(89, 255, 0, .18), transparent 42%),
+    linear-gradient(145deg, #101713, #060907);
+  border: 1px solid rgba(89, 255, 0, .30);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, .55);
+}
+
+.auth-loading-spinner {
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 18px;
+  border-radius: 999px;
+  border: 5px solid rgba(89, 255, 0, .18);
+  border-top-color: #59ff00;
+  animation: mubiSpin 1s linear infinite;
+}
+
+.auth-loading-modal h3 {
+  color: #f4fff0;
+  font-size: 24px;
+  font-weight: 900;
+  margin: 0 0 8px;
+}
+
+.auth-loading-modal p {
+  color: rgba(244, 255, 240, .72);
+  margin: 0;
+  line-height: 1.5;
+}
+
+.forgot-password-link {
+  width: 100%;
+  margin-top: 12px;
+  border: 0;
+  background: transparent;
+  color: #86ff61;
+  font-weight: 900;
+  text-align: center;
+  text-decoration: underline;
+}
+
+.forgot-password-link:hover {
+  color: #59ff00;
+}
+
+@keyframes mubiSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}

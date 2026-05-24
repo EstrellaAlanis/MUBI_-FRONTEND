@@ -28,9 +28,15 @@ export default function Login({ onLogin }) {
   const [codigoRegistroEnviado, setCodigoRegistroEnviado] = useState(false);
   const [registroVerificado, setRegistroVerificado] = useState(false);
 
+  const [recuperacionCorreo, setRecuperacionCorreo] = useState('');
+  const [recuperacionCodigo, setRecuperacionCodigo] = useState('');
+  const [nuevaContrasena, setNuevaContrasena] = useState('');
+  const [codigoRecuperacionEnviado, setCodigoRecuperacionEnviado] = useState(false);
+
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
+  const [loadingText, setLoadingText] = useState('Procesando solicitud');
 
   const [registro, setRegistro] = useState({
     nombres: '',
@@ -50,7 +56,8 @@ export default function Login({ onLogin }) {
       nombre: data?.nombre || data?.nombres || (role === 'admin' ? 'Administrador' : 'Cliente'),
       apellido: data?.apellido || data?.apellidos || '',
       correo: data?.correo || correo,
-      role
+      role,
+      token: data?.token || user?.token || ''
     };
   };
 
@@ -62,19 +69,34 @@ export default function Login({ onLogin }) {
   const cambiarModo = (nuevoModo) => {
     setModo(nuevoModo);
     resetMessages();
+
     setCodigoLogin('');
     setCodigoLoginEnviado(false);
+
     setCodigoGoogle('');
     setCodigoGoogleEnviado(false);
     setGooglePendiente(null);
+
     setCodigoRegistro('');
     setCodigoRegistroEnviado(false);
     setRegistroVerificado(false);
+
+    setRecuperacionCorreo('');
+    setRecuperacionCodigo('');
+    setNuevaContrasena('');
+    setCodigoRecuperacionEnviado(false);
   };
 
   const enviarCodigoLogin = async (e) => {
     e.preventDefault();
     resetMessages();
+
+    if (!correo || !contrasena) {
+      setError('Ingresa tu correo y contraseña.');
+      return;
+    }
+
+    setLoadingText('Enviando código de acceso');
     setLoading(true);
 
     try {
@@ -95,6 +117,13 @@ export default function Login({ onLogin }) {
   const verificarCodigoLogin = async (e) => {
     e.preventDefault();
     resetMessages();
+
+    if (!codigoLogin || codigoLogin.length !== 6) {
+      setError('Ingresa el código de 6 dígitos.');
+      return;
+    }
+
+    setLoadingText('Validando código de acceso');
     setLoading(true);
 
     try {
@@ -115,6 +144,7 @@ export default function Login({ onLogin }) {
 
   const iniciarGoogleConCodigo = async () => {
     resetMessages();
+    setLoadingText('Validando cuenta de Google');
     setLoading(true);
 
     try {
@@ -130,6 +160,8 @@ export default function Login({ onLogin }) {
       const partesNombre = (googleUser.displayName || 'Cliente MUBI').trim().split(' ');
       const nombres = partesNombre.slice(0, 2).join(' ') || 'Cliente';
       const apellidos = partesNombre.slice(2).join(' ') || '';
+
+      setLoadingText('Enviando código a tu Gmail');
 
       await api.post(`${endpoints.usuarios}/google/enviar-codigo`, {
         correo: correoGoogle
@@ -161,6 +193,12 @@ export default function Login({ onLogin }) {
       return;
     }
 
+    if (!codigoGoogle || codigoGoogle.length !== 6) {
+      setError('Ingresa el código de 6 dígitos enviado a tu Gmail.');
+      return;
+    }
+
+    setLoadingText('Validando código de Google');
     setLoading(true);
 
     try {
@@ -195,6 +233,7 @@ export default function Login({ onLogin }) {
       return;
     }
 
+    setLoadingText('Enviando código de registro');
     setLoading(true);
 
     try {
@@ -220,6 +259,12 @@ export default function Login({ onLogin }) {
       return;
     }
 
+    if (codigoRegistro.length !== 6) {
+      setError('El código debe tener 6 dígitos.');
+      return;
+    }
+
+    setLoadingText('Verificando correo de registro');
     setLoading(true);
 
     try {
@@ -251,6 +296,12 @@ export default function Login({ onLogin }) {
       return;
     }
 
+    if (registro.contrasena.length < 6) {
+      setError('La contraseña debe tener al menos 6 caracteres.');
+      return;
+    }
+
+    setLoadingText('Creando cuenta cliente');
     setLoading(true);
 
     try {
@@ -281,6 +332,389 @@ export default function Login({ onLogin }) {
     }
   };
 
+  const enviarCodigoRecuperacion = async (e) => {
+    e.preventDefault();
+    resetMessages();
+
+    if (!recuperacionCorreo) {
+      setError('Ingresa tu correo para recuperar la contraseña.');
+      return;
+    }
+
+    setLoadingText('Enviando código de recuperación');
+    setLoading(true);
+
+    try {
+      await api.post(`${endpoints.usuarios}/recuperar/enviar-codigo`, {
+        correo: recuperacionCorreo
+      });
+
+      setCodigoRecuperacionEnviado(true);
+      setMessage('Código de recuperación enviado. Revisa tu correo.');
+    } catch (err) {
+      setError(err.message || 'No se pudo enviar el código de recuperación.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const restablecerContrasena = async (e) => {
+    e.preventDefault();
+    resetMessages();
+
+    if (!recuperacionCorreo || !recuperacionCodigo || !nuevaContrasena) {
+      setError('Completa correo, código y nueva contraseña.');
+      return;
+    }
+
+    if (recuperacionCodigo.length !== 6) {
+      setError('El código debe tener 6 dígitos.');
+      return;
+    }
+
+    if (nuevaContrasena.length < 6) {
+      setError('La nueva contraseña debe tener al menos 6 caracteres.');
+      return;
+    }
+
+    setLoadingText('Actualizando contraseña');
+    setLoading(true);
+
+    try {
+      await api.post(`${endpoints.usuarios}/recuperar/restablecer`, {
+        correo: recuperacionCorreo,
+        codigo: recuperacionCodigo,
+        nuevaContrasena
+      });
+
+      setMessage('Contraseña actualizada correctamente. Ahora inicia sesión.');
+      setModo('login');
+      setCorreo(recuperacionCorreo);
+      setContrasena('');
+      setCodigoLogin('');
+      setCodigoLoginEnviado(false);
+      setRecuperacionCorreo('');
+      setRecuperacionCodigo('');
+      setNuevaContrasena('');
+      setCodigoRecuperacionEnviado(false);
+    } catch (err) {
+      setError(err.message || 'No se pudo restablecer la contraseña.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const renderLogin = () => {
+    if (codigoGoogleEnviado && googlePendiente) {
+      return (
+        <form onSubmit={verificarCodigoGoogle}>
+          <div className="otp-info-box google-otp-box">
+            <i className="bi bi-google"></i>
+            <div>
+              <strong>Google validó tu cuenta</strong>
+              <span>Ahora confirma el código enviado a {googlePendiente.correo}.</span>
+            </div>
+          </div>
+
+          <label>Código de verificación</label>
+          <input
+            className="form-control otp-input"
+            value={codigoGoogle}
+            onChange={e => setCodigoGoogle(e.target.value.replace(/\D/g, '').slice(0, 6))}
+            placeholder="Ejemplo: 123456"
+            maxLength="6"
+            required
+          />
+
+          <button className="btn btn-primary w-100 mt-3" type="submit" disabled={loading}>
+            <i className="bi bi-shield-check"></i>
+            {loading ? 'Verificando...' : 'Verificar e ingresar'}
+          </button>
+
+          <button
+            className="btn btn-outline-dark w-100 mt-2"
+            type="button"
+            onClick={() => {
+              setCodigoGoogleEnviado(false);
+              setGooglePendiente(null);
+              setCodigoGoogle('');
+              setMessage('');
+            }}
+            disabled={loading}
+          >
+            Cambiar cuenta de Google
+          </button>
+        </form>
+      );
+    }
+
+    if (!codigoLoginEnviado) {
+      return (
+        <form onSubmit={enviarCodigoLogin}>
+          <label>Correo electrónico</label>
+          <input
+            className="form-control"
+            type="email"
+            value={correo}
+            onChange={e => setCorreo(e.target.value)}
+            placeholder="Ingresa tu correo"
+            required
+          />
+
+          <label>Contraseña</label>
+          <input
+            className="form-control"
+            type="password"
+            value={contrasena}
+            onChange={e => setContrasena(e.target.value)}
+            placeholder="Ingresa tu contraseña"
+            required
+          />
+
+          <button className="btn btn-primary w-100 mt-3" type="submit" disabled={loading}>
+            <i className="bi bi-send-check"></i>
+            {loading ? 'Enviando...' : 'Enviar código al correo'}
+          </button>
+
+          <button
+            className="forgot-password-link"
+            type="button"
+            onClick={() => cambiarModo('recuperacion')}
+            disabled={loading}
+          >
+            ¿Olvidaste tu contraseña?
+          </button>
+
+          <button
+            className="btn btn-google w-100 mt-3"
+            type="button"
+            onClick={iniciarGoogleConCodigo}
+            disabled={loading}
+          >
+            <i className="bi bi-google"></i>
+            {loading ? 'Validando...' : 'Continuar con Google'}
+          </button>
+        </form>
+      );
+    }
+
+    return (
+      <form onSubmit={verificarCodigoLogin}>
+        <div className="otp-info-box">
+          <i className="bi bi-envelope-check"></i>
+          <div>
+            <strong>Código enviado</strong>
+            <span>Revisa el correo {correo} e ingresa el código de 6 dígitos.</span>
+          </div>
+        </div>
+
+        <label>Código de verificación</label>
+        <input
+          className="form-control otp-input"
+          value={codigoLogin}
+          onChange={e => setCodigoLogin(e.target.value.replace(/\D/g, '').slice(0, 6))}
+          placeholder="Ejemplo: 123456"
+          maxLength="6"
+          required
+        />
+
+        <button className="btn btn-primary w-100 mt-3" type="submit" disabled={loading}>
+          <i className="bi bi-shield-check"></i>
+          {loading ? 'Verificando...' : 'Verificar e ingresar'}
+        </button>
+
+        <button
+          className="btn btn-outline-dark w-100 mt-2"
+          type="button"
+          onClick={() => {
+            setCodigoLoginEnviado(false);
+            setCodigoLogin('');
+            setMessage('');
+          }}
+          disabled={loading}
+        >
+          Cambiar correo o contraseña
+        </button>
+      </form>
+    );
+  };
+
+  const renderRegistro = () => (
+    <form onSubmit={registrarCliente}>
+      <div className="otp-register-box">
+        <label>Correo electrónico</label>
+        <div className="input-action">
+          <input
+            className="form-control"
+            type="email"
+            value={registro.correo}
+            onChange={e => {
+              setRegistro({ ...registro, correo: e.target.value });
+              setCodigoRegistroEnviado(false);
+              setRegistroVerificado(false);
+              setCodigoRegistro('');
+            }}
+            required
+          />
+
+          <button
+            className="btn btn-outline-dark"
+            type="button"
+            onClick={enviarCodigoRegistro}
+            disabled={loading || !registro.correo}
+          >
+            Enviar código
+          </button>
+        </div>
+
+        {codigoRegistroEnviado && !registroVerificado && (
+          <>
+            <label>Código recibido</label>
+            <div className="input-action">
+              <input
+                className="form-control otp-input"
+                value={codigoRegistro}
+                onChange={e => setCodigoRegistro(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                placeholder="6 dígitos"
+                maxLength="6"
+              />
+
+              <button
+                className="btn btn-primary"
+                type="button"
+                onClick={verificarCodigoRegistro}
+                disabled={loading || codigoRegistro.length !== 6}
+              >
+                Verificar
+              </button>
+            </div>
+          </>
+        )}
+
+        {registroVerificado && (
+          <div className="otp-verified-box">
+            <i className="bi bi-check-circle-fill"></i>
+            Correo verificado correctamente.
+          </div>
+        )}
+      </div>
+
+      <fieldset disabled={!registroVerificado} className={!registroVerificado ? 'disabled-register-fields' : ''}>
+        <div className="login-form-grid">
+          <div>
+            <label>Nombres</label>
+            <input
+              className="form-control"
+              value={registro.nombres}
+              onChange={e => setRegistro({ ...registro, nombres: e.target.value })}
+              required
+            />
+          </div>
+
+          <div>
+            <label>Apellidos</label>
+            <input
+              className="form-control"
+              value={registro.apellidos}
+              onChange={e => setRegistro({ ...registro, apellidos: e.target.value })}
+              required
+            />
+          </div>
+        </div>
+
+        <label>Contraseña</label>
+        <input
+          className="form-control"
+          type="password"
+          value={registro.contrasena}
+          onChange={e => setRegistro({ ...registro, contrasena: e.target.value })}
+          placeholder="Crea una contraseña segura"
+          required
+        />
+
+        <small className="login-oauth-note">
+          Tu teléfono, dirección y datos para boleta/factura se pedirán cuando confirmes un pedido.
+        </small>
+
+        <button className="btn btn-primary w-100 mt-3" type="submit" disabled={loading || !registroVerificado}>
+          <i className="bi bi-person-plus"></i>
+          {loading ? 'Creando...' : 'Crear cuenta'}
+        </button>
+      </fieldset>
+    </form>
+  );
+
+  const renderRecuperacion = () => (
+    <form onSubmit={codigoRecuperacionEnviado ? restablecerContrasena : enviarCodigoRecuperacion}>
+      <div className="otp-info-box">
+        <i className="bi bi-key-fill"></i>
+        <div>
+          <strong>Recuperación de contraseña</strong>
+          <span>Te enviaremos un código para crear una nueva contraseña.</span>
+        </div>
+      </div>
+
+      <label>Correo electrónico</label>
+      <input
+        className="form-control"
+        type="email"
+        value={recuperacionCorreo}
+        onChange={e => {
+          setRecuperacionCorreo(e.target.value);
+          setCodigoRecuperacionEnviado(false);
+          setRecuperacionCodigo('');
+          setNuevaContrasena('');
+        }}
+        placeholder="Ingresa tu correo registrado"
+        required
+      />
+
+      {codigoRecuperacionEnviado && (
+        <>
+          <label>Código recibido</label>
+          <input
+            className="form-control otp-input"
+            value={recuperacionCodigo}
+            onChange={e => setRecuperacionCodigo(e.target.value.replace(/\D/g, '').slice(0, 6))}
+            placeholder="Código de 6 dígitos"
+            maxLength="6"
+            required
+          />
+
+          <label>Nueva contraseña</label>
+          <input
+            className="form-control"
+            type="password"
+            value={nuevaContrasena}
+            onChange={e => setNuevaContrasena(e.target.value)}
+            placeholder="Nueva contraseña"
+            required
+          />
+        </>
+      )}
+
+      <button className="btn btn-primary w-100 mt-3" type="submit" disabled={loading}>
+        <i className="bi bi-shield-check"></i>
+        {loading
+          ? 'Procesando...'
+          : codigoRecuperacionEnviado
+            ? 'Cambiar contraseña'
+            : 'Enviar código de recuperación'}
+      </button>
+
+      {codigoRecuperacionEnviado && (
+        <button
+          className="btn btn-outline-dark w-100 mt-2"
+          type="button"
+          onClick={enviarCodigoRecuperacion}
+          disabled={loading}
+        >
+          Reenviar código
+        </button>
+      )}
+    </form>
+  );
+
   return (
     <div className="login-screen fade-in">
       <section className="login-brand-panel">
@@ -308,238 +742,35 @@ export default function Login({ onLogin }) {
       <section className="login-card-panel">
         <div className="login-card">
           <span className="badge-soft">
-            {modo === 'login' ? 'Acceso con verificación' : 'Registro rápido'}
+            {modo === 'login'
+              ? 'Acceso con verificación'
+              : modo === 'registro'
+                ? 'Registro rápido'
+                : 'Recuperación segura'}
           </span>
 
-          <h2>{modo === 'login' ? 'Iniciar sesión' : 'Crear cuenta cliente'}</h2>
+          <h2>
+            {modo === 'login'
+              ? 'Iniciar sesión'
+              : modo === 'registro'
+                ? 'Crear cuenta cliente'
+                : 'Recuperar contraseña'}
+          </h2>
 
           <p className="login-subtitle">
             {modo === 'login'
               ? 'Usa correo y contraseña, o valida tu cuenta con Google y confirma el código enviado por MUBI.'
-              : 'Verifica tu correo y completa solo tus datos básicos. Los datos de entrega se pedirán al hacer un pedido.'}
+              : modo === 'registro'
+                ? 'Verifica tu correo y completa solo tus datos básicos. Los datos de entrega se pedirán al hacer un pedido.'
+                : 'Ingresa tu correo, confirma el código recibido y crea una nueva contraseña.'}
           </p>
 
           {error && <div className="alert alert-danger">{error}</div>}
           {message && <div className="alert alert-success">{message}</div>}
 
-          {modo === 'login' ? (
-            <>
-              {codigoGoogleEnviado && googlePendiente ? (
-                <form onSubmit={verificarCodigoGoogle}>
-                  <div className="otp-info-box google-otp-box">
-                    <i className="bi bi-google"></i>
-                    <div>
-                      <strong>Google validó tu cuenta</strong>
-                      <span>Ahora confirma el código enviado a {googlePendiente.correo}.</span>
-                    </div>
-                  </div>
-
-                  <label>Código de verificación</label>
-                  <input
-                    className="form-control otp-input"
-                    value={codigoGoogle}
-                    onChange={e => setCodigoGoogle(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                    placeholder="Ejemplo: 123456"
-                    maxLength="6"
-                    required
-                  />
-
-                  <button className="btn btn-primary w-100 mt-3" type="submit" disabled={loading}>
-                    <i className="bi bi-shield-check"></i>
-                    {loading ? 'Verificando...' : 'Verificar e ingresar'}
-                  </button>
-
-                  <button
-                    className="btn btn-outline-dark w-100 mt-2"
-                    type="button"
-                    onClick={() => {
-                      setCodigoGoogleEnviado(false);
-                      setGooglePendiente(null);
-                      setCodigoGoogle('');
-                      setMessage('');
-                    }}
-                  >
-                    Cambiar cuenta de Google
-                  </button>
-                </form>
-              ) : !codigoLoginEnviado ? (
-                <form onSubmit={enviarCodigoLogin}>
-                  <label>Correo electrónico</label>
-                  <input
-                    className="form-control"
-                    type="email"
-                    value={correo}
-                    onChange={e => setCorreo(e.target.value)}
-                    required
-                  />
-
-                  <label>Contraseña</label>
-                  <input
-                    className="form-control"
-                    type="password"
-                    value={contrasena}
-                    onChange={e => setContrasena(e.target.value)}
-                    required
-                  />
-
-                  <button className="btn btn-primary w-100 mt-3" type="submit" disabled={loading}>
-                    <i className="bi bi-send-check"></i>
-                    {loading ? 'Enviando...' : 'Enviar código al correo'}
-                  </button>
-
-                  <button
-                    className="btn btn-google w-100 mt-3"
-                    type="button"
-                    onClick={iniciarGoogleConCodigo}
-                    disabled={loading}
-                  >
-                    <i className="bi bi-google"></i>
-                    {loading ? 'Validando...' : 'Continuar con Google'}
-                  </button>
-                </form>
-              ) : (
-                <form onSubmit={verificarCodigoLogin}>
-                  <div className="otp-info-box">
-                    <i className="bi bi-envelope-check"></i>
-                    <div>
-                      <strong>Código enviado</strong>
-                      <span>Revisa el correo {correo} e ingresa el código de 6 dígitos.</span>
-                    </div>
-                  </div>
-
-                  <label>Código de verificación</label>
-                  <input
-                    className="form-control otp-input"
-                    value={codigoLogin}
-                    onChange={e => setCodigoLogin(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                    placeholder="Ejemplo: 123456"
-                    maxLength="6"
-                    required
-                  />
-
-                  <button className="btn btn-primary w-100 mt-3" type="submit" disabled={loading}>
-                    <i className="bi bi-shield-check"></i>
-                    {loading ? 'Verificando...' : 'Verificar e ingresar'}
-                  </button>
-
-                  <button
-                    className="btn btn-outline-dark w-100 mt-2"
-                    type="button"
-                    onClick={() => {
-                      setCodigoLoginEnviado(false);
-                      setCodigoLogin('');
-                      setMessage('');
-                    }}
-                  >
-                    Cambiar correo o contraseña
-                  </button>
-                </form>
-              )}
-            </>
-          ) : (
-            <form onSubmit={registrarCliente}>
-              <div className="otp-register-box">
-                <label>Correo electrónico</label>
-                <div className="input-action">
-                  <input
-                    className="form-control"
-                    type="email"
-                    value={registro.correo}
-                    onChange={e => {
-                      setRegistro({ ...registro, correo: e.target.value });
-                      setCodigoRegistroEnviado(false);
-                      setRegistroVerificado(false);
-                      setCodigoRegistro('');
-                    }}
-                    required
-                  />
-
-                  <button
-                    className="btn btn-outline-dark"
-                    type="button"
-                    onClick={enviarCodigoRegistro}
-                    disabled={loading || !registro.correo}
-                  >
-                    Enviar código
-                  </button>
-                </div>
-
-                {codigoRegistroEnviado && !registroVerificado && (
-                  <>
-                    <label>Código recibido</label>
-                    <div className="input-action">
-                      <input
-                        className="form-control otp-input"
-                        value={codigoRegistro}
-                        onChange={e => setCodigoRegistro(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                        placeholder="6 dígitos"
-                        maxLength="6"
-                      />
-
-                      <button
-                        className="btn btn-primary"
-                        type="button"
-                        onClick={verificarCodigoRegistro}
-                        disabled={loading || codigoRegistro.length !== 6}
-                      >
-                        Verificar
-                      </button>
-                    </div>
-                  </>
-                )}
-
-                {registroVerificado && (
-                  <div className="otp-verified-box">
-                    <i className="bi bi-check-circle-fill"></i>
-                    Correo verificado correctamente.
-                  </div>
-                )}
-              </div>
-
-              <fieldset disabled={!registroVerificado} className={!registroVerificado ? 'disabled-register-fields' : ''}>
-                <div className="login-form-grid">
-                  <div>
-                    <label>Nombres</label>
-                    <input
-                      className="form-control"
-                      value={registro.nombres}
-                      onChange={e => setRegistro({ ...registro, nombres: e.target.value })}
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label>Apellidos</label>
-                    <input
-                      className="form-control"
-                      value={registro.apellidos}
-                      onChange={e => setRegistro({ ...registro, apellidos: e.target.value })}
-                      required
-                    />
-                  </div>
-                </div>
-
-                <label>Contraseña</label>
-                <input
-                  className="form-control"
-                  type="password"
-                  value={registro.contrasena}
-                  onChange={e => setRegistro({ ...registro, contrasena: e.target.value })}
-                  placeholder="Crea una contraseña segura"
-                  required
-                />
-
-                <small className="login-oauth-note">
-                  Tu teléfono, dirección y datos para boleta/factura se pedirán cuando confirmes un pedido.
-                </small>
-
-                <button className="btn btn-primary w-100 mt-3" type="submit" disabled={loading || !registroVerificado}>
-                  <i className="bi bi-person-plus"></i>
-                  {loading ? 'Creando...' : 'Crear cuenta'}
-                </button>
-              </fieldset>
-            </form>
-          )}
+          {modo === 'login' && renderLogin()}
+          {modo === 'registro' && renderRegistro()}
+          {modo === 'recuperacion' && renderRecuperacion()}
 
           <div className="login-switch">
             {modo === 'login' ? (
@@ -558,11 +789,22 @@ export default function Login({ onLogin }) {
               </>
             )}
           </div>
+
           <Link className="guest-link" to="/">
             Continuar como invitado
           </Link>
         </div>
       </section>
+
+      {loading && (
+        <div className="auth-loading-backdrop">
+          <div className="auth-loading-modal">
+            <div className="auth-loading-spinner"></div>
+            <h3>{loadingText}</h3>
+            <p>Estamos validando la información. Por favor espera unos segundos.</p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

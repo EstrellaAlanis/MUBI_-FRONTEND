@@ -1,9 +1,21 @@
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5071/api';
 
+function getToken() {
+  try {
+    const user = JSON.parse(localStorage.getItem('mubiUser') || 'null');
+    return user?.token || '';
+  } catch {
+    return '';
+  }
+}
+
 async function request(endpoint, options = {}) {
+  const token = getToken();
+
   const response = await fetch(`${API_URL}${endpoint}`, {
     headers: {
       'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...(options.headers || {})
     },
     ...options
@@ -16,6 +28,11 @@ async function request(endpoint, options = {}) {
       const error = await response.json();
       message = error.detail || error.message || message;
     } catch (_) {}
+
+    if (response.status === 401) {
+      localStorage.removeItem('mubiUser');
+      localStorage.setItem('redirectAfterLogin', window.location.pathname);
+    }
 
     throw new Error(message);
   }
@@ -46,11 +63,16 @@ export const api = {
     }),
 
   upload: async (endpoint, file, fieldName = 'archivo') => {
+    const token = getToken();
+
     const formData = new FormData();
     formData.append(fieldName, file);
 
     const response = await fetch(`${API_URL}${endpoint}`, {
       method: 'POST',
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {})
+      },
       body: formData
     });
 
@@ -61,6 +83,11 @@ export const api = {
         const error = await response.json();
         message = error.detail || error.message || message;
       } catch (_) {}
+
+      if (response.status === 401) {
+        localStorage.removeItem('mubiUser');
+        localStorage.setItem('redirectAfterLogin', window.location.pathname);
+      }
 
       throw new Error(message);
     }
