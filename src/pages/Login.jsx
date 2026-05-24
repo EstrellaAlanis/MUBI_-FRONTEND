@@ -15,8 +15,8 @@ export default function Login({ onLogin }) {
 
   const [modo, setModo] = useState('login');
 
-  const [correo, setCorreo] = useState('admin@mubi.com');
-  const [contrasena, setContrasena] = useState('Admin123*');
+  const [correo, setCorreo] = useState('');
+  const [contrasena, setContrasena] = useState('');
   const [codigoLogin, setCodigoLogin] = useState('');
   const [codigoLoginEnviado, setCodigoLoginEnviado] = useState(false);
 
@@ -279,17 +279,6 @@ export default function Login({ onLogin }) {
     } finally {
       setLoading(false);
     }
-  };
-
-  const loginDemo = (role) => {
-    const session = role === 'admin'
-      ? { idUsuario: 1, nombre: 'Angel', apellido: 'Mananita', correo: 'admin@mubi.com', role: 'admin' }
-      : { idUsuario: 2, nombre: 'Jackeline', apellido: 'Advíncula', correo: 'cliente1@mubi.com', role: 'cliente' };
-
-    setCorreo(session.correo);
-    setContrasena(role === 'admin' ? 'Admin123*' : 'Cliente123*');
-    onLogin(session);
-    navigate('/');
   };
 
   return (
@@ -569,17 +558,6 @@ export default function Login({ onLogin }) {
               </>
             )}
           </div>
-
-          <div className="quick-login">
-            <button className="btn btn-outline-dark" onClick={() => loginDemo('admin')}>
-              <i className="bi bi-person-gear"></i> Demo admin
-            </button>
-
-            <button className="btn btn-outline-dark" onClick={() => loginDemo('cliente')}>
-              <i className="bi bi-person-heart"></i> Demo cliente
-            </button>
-          </div>
-
           <Link className="guest-link" to="/">
             Continuar como invitado
           </Link>
