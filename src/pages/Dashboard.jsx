@@ -227,9 +227,9 @@ const pedirProducto = (p) => {
         )}
 
         <section className="mubi-web-hero mubi-video-hero">
-           <video
+          <video
             className="mubi-hero-bg-video"
-            src="public/videos/video_hero.mp4"
+            src="/videos/video_hero.mp4"
             autoPlay
             muted
             loop
