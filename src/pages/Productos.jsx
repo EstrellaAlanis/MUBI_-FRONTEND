@@ -3,6 +3,7 @@ import PageHeader from '../components/PageHeader.jsx';
 import { api, endpoints } from '../services/api.js';
 
 const API_BASE_URL = 'http://localhost:5071';
+const ORDER_SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
 
 const emptyForm = {
   nombre: '',
@@ -11,6 +12,27 @@ const emptyForm = {
   disponibilidad: 'disponible',
   idCategoria: '',
   rutaImagenPrincipal: ''
+};
+
+const emptyOrderOptions = {
+  step: 1,
+  talla: 'M',
+  color: 'Negro',
+  cantidad: 1,
+  modoCantidad: 'simple',
+  tallasLote: {
+    XS: 0,
+    S: 0,
+    M: 0,
+    L: 0,
+    XL: 0,
+    XXL: 0
+  },
+  tipoPersonalizacion: 'diseno',
+  textoPersonalizado: '',
+  notas: '',
+  disenoFrontal: null,
+  disenoPosterior: null
 };
 
 export default function Productos({ role, user }) {
@@ -28,12 +50,7 @@ export default function Productos({ role, user }) {
 
   const [productoModal, setProductoModal] = useState(null);
   const [productoAgregado, setProductoAgregado] = useState(null);
-  const [opcionesPedido, setOpcionesPedido] = useState({
-    talla: 'M',
-    color: 'Negro',
-    cantidad: 1,
-    personalizados: [{ talla: 'M', nombre: '', numero: '' }]
-  });
+  const [opcionesPedido, setOpcionesPedido] = useState(emptyOrderOptions);
 
   const load = async () => {
     const [productosData, categoriasData] = await Promise.all([
@@ -61,6 +78,21 @@ export default function Productos({ role, user }) {
       return matchSearch && matchCategory;
     });
   }, [productos, search, filter]);
+
+  const totalCantidadModal = useMemo(() => {
+    if (opcionesPedido.modoCantidad === 'lote') {
+      return Object.values(opcionesPedido.tallasLote).reduce(
+        (acc, value) => acc + Number(value || 0),
+        0
+      );
+    }
+
+    return Math.max(1, Number(opcionesPedido.cantidad || 1));
+  }, [opcionesPedido]);
+
+  const totalEstimadoModal = useMemo(() => {
+    return Number(productoModal?.precio || 0) * Number(totalCantidadModal || 0);
+  }, [productoModal, totalCantidadModal]);
 
   const handleImagen = (e) => {
     const file = e.target.files[0];
@@ -161,66 +193,97 @@ export default function Productos({ role, user }) {
   const abrirOpcionesProducto = (p) => {
     setProductoModal(p);
     setProductoAgregado(null);
-    setOpcionesPedido({
-      talla: 'M',
-      color: 'Negro',
-      cantidad: 1,
-      personalizados: [{ talla: 'M', nombre: '', numero: '' }]
-    });
+    setOpcionesPedido(emptyOrderOptions);
   };
 
   const cerrarModalProducto = () => {
     setProductoModal(null);
     setProductoAgregado(null);
+    setOpcionesPedido(emptyOrderOptions);
   };
 
-  const actualizarFilaPersonalizada = (index, field, value) => {
-    const filas = [...opcionesPedido.personalizados];
+  const setStep = (step) => {
+    setOpcionesPedido(prev => ({ ...prev, step }));
+  };
 
-    filas[index] = {
-      ...filas[index],
-      [field]: value
-    };
-
-    const ultima = filas[filas.length - 1];
-    const ultimaTieneDatos =
-      String(ultima.talla || '').trim() !== '' ||
-      String(ultima.nombre || '').trim() !== '' ||
-      String(ultima.numero || '').trim() !== '';
-
-    if (index === filas.length - 1 && ultimaTieneDatos) {
-      filas.push({ talla: 'M', nombre: '', numero: '' });
+  const nextStep = () => {
+    if (opcionesPedido.step === 2 && totalCantidadModal <= 0) {
+      setError('Selecciona al menos una prenda para continuar.');
+      return;
     }
 
-    setOpcionesPedido({
-      ...opcionesPedido,
-      personalizados: filas
-    });
+    setError('');
+    setStep(Math.min(3, opcionesPedido.step + 1));
   };
 
-  const agregarFilaPersonalizada = () => {
-    setOpcionesPedido({
-      ...opcionesPedido,
-      personalizados: [
-        ...opcionesPedido.personalizados,
-        { talla: 'M', nombre: '', numero: '' }
-      ]
-    });
+  const prevStep = () => {
+    setStep(Math.max(1, opcionesPedido.step - 1));
   };
 
-  const eliminarFilaPersonalizada = (index) => {
-    const filas = opcionesPedido.personalizados.filter((_, i) => i !== index);
+  const actualizarTallaLote = (talla, value) => {
+    const cantidad = Math.max(0, Number(value || 0));
 
-    setOpcionesPedido({
-      ...opcionesPedido,
-      personalizados: filas.length
-        ? filas
-        : [{ talla: 'M', nombre: '', numero: '' }]
-    });
+    setOpcionesPedido(prev => ({
+      ...prev,
+      tallasLote: {
+        ...prev.tallasLote,
+        [talla]: cantidad
+      }
+    }));
+  };
+
+  const handleDisenoFile = (field, file) => {
+    if (!file) {
+      setOpcionesPedido(prev => ({ ...prev, [field]: null }));
+      return;
+    }
+
+    const extension = file.name.split('.').pop().toLowerCase();
+
+    if (!['jpg', 'jpeg', 'png', 'webp', 'pdf'].includes(extension)) {
+      setError('Solo se permiten archivos JPG, PNG, WEBP o PDF para el diseño.');
+      return;
+    }
+
+    setError('');
+    setOpcionesPedido(prev => ({
+      ...prev,
+      [field]: {
+        nombre: file.name,
+        tipo: file.type || 'archivo'
+      }
+    }));
+  };
+
+  const getPersonalizadosCarrito = () => {
+    if (opcionesPedido.modoCantidad === 'lote') {
+      return Object.entries(opcionesPedido.tallasLote)
+        .filter(([, cantidad]) => Number(cantidad) > 0)
+        .map(([talla, cantidad]) => ({
+          talla,
+          nombre: `${cantidad} prenda(s)`,
+          numero: ''
+        }));
+    }
+
+    if (opcionesPedido.textoPersonalizado.trim()) {
+      return [{
+        talla: opcionesPedido.talla,
+        nombre: opcionesPedido.textoPersonalizado.trim(),
+        numero: ''
+      }];
+    }
+
+    return [];
   };
 
   const agregarAlCarrito = () => {
     if (!productoModal) return;
+
+    if (totalCantidadModal <= 0) {
+      setError('Selecciona al menos una prenda para agregar al carrito.');
+      return;
+    }
 
     const cart = JSON.parse(localStorage.getItem('mubiCart') || '[]');
 
@@ -232,15 +295,23 @@ export default function Productos({ role, user }) {
       categoria: productoModal.categoria,
       precio: Number(productoModal.precio || 0),
       imagen: imagenProducto(productoModal),
-      talla: opcionesPedido.talla,
+      talla: opcionesPedido.modoCantidad === 'simple' ? opcionesPedido.talla : 'Pedido por lote',
       color: opcionesPedido.color,
-      cantidad: Number(opcionesPedido.cantidad || 1),
-      personalizados: opcionesPedido.personalizados.filter(
-        row =>
-          String(row.talla || '').trim() !== '' ||
-          String(row.nombre || '').trim() !== '' ||
-          String(row.numero || '').trim() !== ''
-      )
+      cantidad: Number(totalCantidadModal || 1),
+      personalizados: getPersonalizadosCarrito(),
+      modoCantidad: opcionesPedido.modoCantidad,
+      tallasLote: opcionesPedido.tallasLote,
+      tipoPersonalizacion: opcionesPedido.tipoPersonalizacion,
+      textoPersonalizado: opcionesPedido.textoPersonalizado,
+      notas: opcionesPedido.notas,
+      disenoFrontal: opcionesPedido.disenoFrontal?.nombre || '',
+      disenoPosterior: opcionesPedido.disenoPosterior?.nombre || '',
+      descripcionDiseno: [
+        opcionesPedido.textoPersonalizado ? `Texto: ${opcionesPedido.textoPersonalizado}` : '',
+        opcionesPedido.disenoFrontal?.nombre ? `Diseño frontal: ${opcionesPedido.disenoFrontal.nombre}` : '',
+        opcionesPedido.disenoPosterior?.nombre ? `Diseño posterior: ${opcionesPedido.disenoPosterior.nombre}` : '',
+        opcionesPedido.notas ? `Notas: ${opcionesPedido.notas}` : ''
+      ].filter(Boolean).join(' | ')
     };
 
     const nextCart = [...cart, item];
@@ -255,37 +326,388 @@ export default function Productos({ role, user }) {
     }, 900);
   };
 
-  return (
-    <div className="fade-in">
-      <PageHeader
-        icon="bi-bag-heart-fill"
-        title={role === 'admin' ? 'Gestión de productos' : 'Catálogo MUBI'}
-        subtitle={
-          role === 'admin'
-            ? 'Administra el catálogo: registra, edita, lista y elimina productos.'
-            : 'Explora polos sublimados y personalizados. Puedes elegir un modelo y comprar sin registrarte hasta el final.'
-        }
-      />
-
-      {error && <div className="alert alert-danger">{error}</div>}
-      {message && <div className="alert alert-success">{message}</div>}
-
-      {role !== 'admin' && (
-        <section className="catalog-banner">
-          <div>
-            <span className="badge-soft">Catálogo público</span>
-            <h2>Encuentra un diseño y personalízalo a tu estilo</h2>
-            <p>
-              Elige un producto, configura talla, color, cantidad y nombres o números.
-              Luego revisa tu carrito antes de confirmar el pedido.
-            </p>
+  const renderCatalogHeader = () => (
+    <section className="catalog-compact-header">
+      <div className="catalog-compact-main">
+        <div className="catalog-compact-title">
+          <div className="catalog-compact-icon">
+            <i className="bi bi-bag-heart-fill"></i>
           </div>
 
-          <a href="/carrito" className="btn btn-primary">
-            <i className="bi bi-cart3"></i> Ver carrito
-          </a>
-        </section>
+          <div>
+            <span className="badge-soft">Catálogo público</span>
+            <h1>Catálogo MUBI</h1>
+            <p>Busca, elige y personaliza. El inicio de sesión se pedirá recién al confirmar.</p>
+          </div>
+        </div>
+
+        <a href="/carrito" className="catalog-cart-mini">
+          <i className="bi bi-cart3"></i>
+          Ver carrito
+        </a>
+      </div>
+
+      <div className="catalog-compact-tools">
+        <div className="catalog-search-compact">
+          <i className="bi bi-search"></i>
+          <input
+            className="form-control"
+            placeholder="Buscar polos, anime, escolares, deportivos..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
+
+        <select
+          className="form-select catalog-select-compact"
+          value={filter}
+          onChange={(e) => setFilter(e.target.value)}
+        >
+          <option value="">Todas las categorías</option>
+          {categorias.map((c) => (
+            <option key={c.idCategoria} value={c.idCategoria}>
+              {c.nombreCategoria}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <div className="catalog-chip-row">
+        <button
+          type="button"
+          className={!filter ? 'active' : ''}
+          onClick={() => setFilter('')}
+        >
+          Todos
+        </button>
+
+        {categorias.slice(0, 7).map(c => (
+          <button
+            key={c.idCategoria}
+            type="button"
+            className={Number(filter) === Number(c.idCategoria) ? 'active' : ''}
+            onClick={() => setFilter(String(c.idCategoria))}
+          >
+            {c.nombreCategoria}
+          </button>
+        ))}
+      </div>
+
+      <div className="catalog-results-line">
+        <span>{filtered.length} producto(s) encontrados</span>
+        <small>Productos visibles más arriba y filtros integrados.</small>
+      </div>
+
+      {search && (
+        <div className="catalog-search-suggestions">
+          {filtered.slice(0, 5).map((p) => (
+            <button
+              key={p.idProducto}
+              type="button"
+              onClick={() => setSearch(p.nombre)}
+            >
+              <i className="bi bi-bag-heart"></i>
+              <span>{p.nombre}</span>
+              <small>{p.categoria || 'MUBI'}</small>
+            </button>
+          ))}
+        </div>
       )}
+    </section>
+  );
+
+  const renderAdminSearch = () => (
+    <div className="search-access-box mt-4">
+      <div className="search-main">
+        <i className="bi bi-search"></i>
+        <input
+          className="form-control"
+          placeholder="Buscar producto..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+      </div>
+
+      <select
+        className="form-select"
+        value={filter}
+        onChange={(e) => setFilter(e.target.value)}
+      >
+        <option value="">Todas las categorías</option>
+        {categorias.map((c) => (
+          <option key={c.idCategoria} value={c.idCategoria}>
+            {c.nombreCategoria}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
+
+  const renderStepperContent = () => {
+    if (!productoModal) return null;
+
+    if (opcionesPedido.step === 1) {
+      return (
+        <div className="order-step-grid">
+          <div className="order-product-preview">
+            {imagenProducto(productoModal) ? (
+              <img src={imagenProducto(productoModal)} alt={productoModal.nombre} />
+            ) : (
+              <i className="bi bi-bag-heart-fill"></i>
+            )}
+            <strong>{productoModal.nombre}</strong>
+            <span>S/ {Number(productoModal.precio || 0).toFixed(2)}</span>
+          </div>
+
+          <div className="order-step-form">
+            <div className="option-group compact">
+              <label>Color base</label>
+              <input
+                className="form-control"
+                value={opcionesPedido.color}
+                onChange={e => setOpcionesPedido({ ...opcionesPedido, color: e.target.value })}
+                placeholder="Ejemplo: Negro, blanco, azul..."
+              />
+            </div>
+
+            <div className="option-group compact">
+              <label>Tipo de personalización</label>
+              <div className="order-choice-grid">
+                {[
+                  ['diseno', 'Subir diseño'],
+                  ['texto', 'Solo texto'],
+                  ['mixto', 'Diseño + texto']
+                ].map(([value, label]) => (
+                  <button
+                    key={value}
+                    type="button"
+                    className={opcionesPedido.tipoPersonalizacion === value ? 'active' : ''}
+                    onClick={() => setOpcionesPedido({ ...opcionesPedido, tipoPersonalizacion: value })}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="order-upload-grid">
+              <label className="order-upload-box">
+                <i className="bi bi-upload"></i>
+                <span>Diseño frontal</span>
+                <small>{opcionesPedido.disenoFrontal?.nombre || 'JPG, PNG, WEBP o PDF'}</small>
+                <input
+                  type="file"
+                  accept="image/*,.pdf"
+                  onChange={e => handleDisenoFile('disenoFrontal', e.target.files[0])}
+                />
+              </label>
+
+              <label className="order-upload-box">
+                <i className="bi bi-upload"></i>
+                <span>Diseño posterior</span>
+                <small>{opcionesPedido.disenoPosterior?.nombre || 'Opcional'}</small>
+                <input
+                  type="file"
+                  accept="image/*,.pdf"
+                  onChange={e => handleDisenoFile('disenoPosterior', e.target.files[0])}
+                />
+              </label>
+            </div>
+
+            <div className="option-group compact">
+              <label>Texto o frase opcional</label>
+              <input
+                className="form-control"
+                value={opcionesPedido.textoPersonalizado}
+                onChange={e => setOpcionesPedido({ ...opcionesPedido, textoPersonalizado: e.target.value })}
+                placeholder="Ejemplo: Promo 2026, nombre, número..."
+              />
+            </div>
+
+            <div className="option-group compact">
+              <label>Notas para el diseño</label>
+              <textarea
+                className="form-control"
+                rows="2"
+                value={opcionesPedido.notas}
+                onChange={e => setOpcionesPedido({ ...opcionesPedido, notas: e.target.value })}
+                placeholder="Ejemplo: quiero el diseño centrado y con acabado brillante..."
+              ></textarea>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    if (opcionesPedido.step === 2) {
+      return (
+        <div className="order-step-form full">
+          <div className="order-mode-switch">
+            <button
+              type="button"
+              className={opcionesPedido.modoCantidad === 'simple' ? 'active' : ''}
+              onClick={() => setOpcionesPedido({ ...opcionesPedido, modoCantidad: 'simple' })}
+            >
+              <i className="bi bi-person"></i>
+              Pedido simple
+            </button>
+
+            <button
+              type="button"
+              className={opcionesPedido.modoCantidad === 'lote' ? 'active' : ''}
+              onClick={() => setOpcionesPedido({ ...opcionesPedido, modoCantidad: 'lote' })}
+            >
+              <i className="bi bi-people"></i>
+              Pedido por lote
+            </button>
+          </div>
+
+          {opcionesPedido.modoCantidad === 'simple' ? (
+            <div className="order-simple-grid">
+              <div className="option-group compact">
+                <label>Talla</label>
+                <div className="option-buttons compact-size-buttons">
+                  {ORDER_SIZES.map(talla => (
+                    <button
+                      key={talla}
+                      type="button"
+                      className={opcionesPedido.talla === talla ? 'active' : ''}
+                      onClick={() => setOpcionesPedido({ ...opcionesPedido, talla })}
+                    >
+                      {talla}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="option-group compact">
+                <label>Cantidad</label>
+                <div className="quantity-control stepper-quantity">
+                  <button
+                    type="button"
+                    onClick={() => setOpcionesPedido({
+                      ...opcionesPedido,
+                      cantidad: Math.max(1, Number(opcionesPedido.cantidad) - 1)
+                    })}
+                  >
+                    -
+                  </button>
+
+                  <input
+                    type="number"
+                    min="1"
+                    value={opcionesPedido.cantidad}
+                    onChange={e => setOpcionesPedido({
+                      ...opcionesPedido,
+                      cantidad: Math.max(1, Number(e.target.value || 1))
+                    })}
+                  />
+
+                  <button
+                    type="button"
+                    onClick={() => setOpcionesPedido({
+                      ...opcionesPedido,
+                      cantidad: Number(opcionesPedido.cantidad) + 1
+                    })}
+                  >
+                    +
+                  </button>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="bulk-size-table">
+              <div className="bulk-size-head">
+                <strong>Tabla rápida por tallas</strong>
+                <span>Total: {totalCantidadModal} prenda(s)</span>
+              </div>
+
+              {ORDER_SIZES.map(talla => (
+                <div className="bulk-size-row" key={talla}>
+                  <span>{talla}</span>
+                  <input
+                    type="number"
+                    min="0"
+                    value={opcionesPedido.tallasLote[talla]}
+                    onChange={e => actualizarTallaLote(talla, e.target.value)}
+                  />
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    return (
+      <div className="order-summary-step">
+        <div className="order-summary-product">
+          {imagenProducto(productoModal) ? (
+            <img src={imagenProducto(productoModal)} alt={productoModal.nombre} />
+          ) : (
+            <i className="bi bi-bag-heart-fill"></i>
+          )}
+
+          <div>
+            <span>{productoModal.categoria || 'MUBI'}</span>
+            <h3>{productoModal.nombre}</h3>
+            <p>{productoModal.descripcion || 'Producto personalizable según tu diseño.'}</p>
+          </div>
+        </div>
+
+        <div className="order-summary-list">
+          <div><span>Color</span><strong>{opcionesPedido.color}</strong></div>
+          <div><span>Modo</span><strong>{opcionesPedido.modoCantidad === 'simple' ? 'Pedido simple' : 'Pedido por lote'}</strong></div>
+          <div><span>Talla</span><strong>{opcionesPedido.modoCantidad === 'simple' ? opcionesPedido.talla : 'Varias tallas'}</strong></div>
+          <div><span>Total prendas</span><strong>{totalCantidadModal}</strong></div>
+          <div><span>Diseño frontal</span><strong>{opcionesPedido.disenoFrontal?.nombre || 'No adjunto'}</strong></div>
+          <div><span>Diseño posterior</span><strong>{opcionesPedido.disenoPosterior?.nombre || 'No adjunto'}</strong></div>
+        </div>
+
+        {opcionesPedido.modoCantidad === 'lote' && (
+          <div className="order-bulk-summary">
+            {Object.entries(opcionesPedido.tallasLote)
+              .filter(([, cantidad]) => Number(cantidad) > 0)
+              .map(([talla, cantidad]) => (
+                <span key={talla}>{talla}: {cantidad}</span>
+              ))}
+          </div>
+        )}
+
+        {opcionesPedido.textoPersonalizado && (
+          <div className="order-note-preview">
+            <strong>Texto:</strong> {opcionesPedido.textoPersonalizado}
+          </div>
+        )}
+
+        {opcionesPedido.notas && (
+          <div className="order-note-preview">
+            <strong>Notas:</strong> {opcionesPedido.notas}
+          </div>
+        )}
+
+        <div className="product-option-summary stepper-total">
+          <span>Total estimado</span>
+          <strong>S/ {totalEstimadoModal.toFixed(2)}</strong>
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <div className="fade-in">
+      {role === 'admin' ? (
+        <PageHeader
+          icon="bi-bag-heart-fill"
+          title="Gestión de productos"
+          subtitle="Administra el catálogo: registra, edita, lista y elimina productos."
+        />
+      ) : (
+        renderCatalogHeader()
+      )}
+
+      {error && <div className="alert alert-danger catalog-alert-center">{error}</div>}
+      {message && <div className="alert alert-success catalog-alert-center">{message}</div>}
 
       {role === 'admin' && (
         <form className="panel-card form-card module-form" onSubmit={handleSubmit}>
@@ -387,54 +809,15 @@ export default function Productos({ role, user }) {
         </form>
       )}
 
-      <div className="search-access-box mt-4">
-        <div className="search-main">
-          <i className="bi bi-search"></i>
-          <input
-            className="form-control"
-            placeholder="Buscar polos, anime, escolares, deportivos..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-        </div>
+      {role === 'admin' && renderAdminSearch()}
 
-        <select
-          className="form-select"
-          value={filter}
-          onChange={(e) => setFilter(e.target.value)}
-        >
-          <option value="">Todas las categorías</option>
-          {categorias.map((c) => (
-            <option key={c.idCategoria} value={c.idCategoria}>
-              {c.nombreCategoria}
-            </option>
-          ))}
-        </select>
-
-        {search && (
-          <div className="search-suggestions">
-            {filtered.slice(0, 5).map((p) => (
-              <button
-                key={p.idProducto}
-                type="button"
-                onClick={() => setSearch(p.nombre)}
-              >
-                <i className="bi bi-bag-heart"></i>
-                <span>{p.nombre}</span>
-                <small>{p.categoria || 'MUBI'}</small>
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
-
-      <div className="product-grid">
+      <div className="product-grid catalog-product-grid-compact">
         {filtered.map((p, index) => {
           const img = imagenProducto(p);
           const disponible = String(p.disponibilidad || '').toLowerCase() === 'disponible';
 
           return (
-            <article className="product-card product-card-premium" key={p.idProducto}>
+            <article className="product-card product-card-premium catalog-card-compact" key={p.idProducto}>
               <div className={`product-art product-art-real art-${index % 4}`}>
                 {img ? (
                   <img src={img} alt={p.nombre} />
@@ -480,7 +863,7 @@ export default function Productos({ role, user }) {
                         type="button"
                         onClick={() => abrirOpcionesProducto(p)}
                       >
-                        Ver detalles
+                        Ver detalle
                       </button>
 
                       <button
@@ -489,7 +872,7 @@ export default function Productos({ role, user }) {
                         disabled={!disponible}
                         onClick={() => abrirOpcionesProducto(p)}
                       >
-                        {disponible ? 'Comprar' : 'No disponible'}
+                        {disponible ? 'Pedir' : 'No disponible'}
                       </button>
                     </div>
                   )}
@@ -509,8 +892,8 @@ export default function Productos({ role, user }) {
       </div>
 
       {productoModal && (
-        <div className="product-modal-backdrop">
-          <div className="product-option-modal">
+        <div className="product-modal-backdrop order-stepper-backdrop">
+          <div className="product-option-modal order-stepper-modal">
             <button
               className="product-modal-close"
               type="button"
@@ -527,157 +910,61 @@ export default function Productos({ role, user }) {
                 <strong>Redirigiendo al carrito...</strong>
               </div>
             ) : (
-              <div className="product-option-layout">
-                <div className="product-option-image">
-                  {imagenProducto(productoModal) ? (
-                    <img src={imagenProducto(productoModal)} alt={productoModal.nombre} />
-                  ) : (
-                    <i className="bi bi-bag-heart-fill"></i>
-                  )}
+              <>
+                <div className="order-stepper-header">
+                  <span className="badge-soft">Pedido guiado</span>
+                  <h2>Personaliza tu pedido</h2>
+                  <p>Completa solo lo necesario. El administrador revisará los detalles antes de confirmar.</p>
                 </div>
 
-                <div className="product-option-content">
-                  <span className="badge-soft">{productoModal.categoria || 'MUBI'}</span>
-                  <h2>{productoModal.nombre}</h2>
-                  <p>{productoModal.descripcion || 'Producto personalizable según tu diseño.'}</p>
-
-                  <strong className="product-option-price">
-                    S/ {Number(productoModal.precio || 0).toFixed(2)}
-                  </strong>
-
-                  <div className="option-group">
-                    <label>Talla base</label>
-                    <div className="option-buttons">
-                      {['XS', 'S', 'M', 'L', 'XL', 'XXL'].map(talla => (
-                        <button
-                          key={talla}
-                          type="button"
-                          className={opcionesPedido.talla === talla ? 'active' : ''}
-                          onClick={() => setOpcionesPedido({ ...opcionesPedido, talla })}
-                        >
-                          {talla}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="option-group">
-                    <label>Color base</label>
-                    <input
-                      className="form-control"
-                      value={opcionesPedido.color}
-                      onChange={e => setOpcionesPedido({ ...opcionesPedido, color: e.target.value })}
-                      placeholder="Ejemplo: Negro, blanco, azul..."
-                    />
-                  </div>
-
-                  <div className="option-group">
-                    <label>Cantidad</label>
-                    <div className="quantity-control">
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setOpcionesPedido({
-                            ...opcionesPedido,
-                            cantidad: Math.max(1, Number(opcionesPedido.cantidad) - 1)
-                          })
-                        }
-                      >
-                        -
-                      </button>
-
-                      <input
-                        type="number"
-                        min="1"
-                        value={opcionesPedido.cantidad}
-                        onChange={e =>
-                          setOpcionesPedido({
-                            ...opcionesPedido,
-                            cantidad: Math.max(1, Number(e.target.value || 1))
-                          })
-                        }
-                      />
-
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setOpcionesPedido({
-                            ...opcionesPedido,
-                            cantidad: Number(opcionesPedido.cantidad) + 1
-                          })
-                        }
-                      >
-                        +
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="option-group">
-                    <div className="custom-rows-header">
-                      <label>Personalización por prenda</label>
-                      <button type="button" onClick={agregarFilaPersonalizada}>
-                        <i className="bi bi-plus-circle"></i> Añadir más
-                      </button>
-                    </div>
-
-                    <div className="custom-rows">
-                      {opcionesPedido.personalizados.map((row, index) => (
-                        <div className="custom-row" key={index}>
-                          <select
-                            value={row.talla}
-                            onChange={e => actualizarFilaPersonalizada(index, 'talla', e.target.value)}
-                          >
-                            {['XS', 'S', 'M', 'L', 'XL', 'XXL'].map(talla => (
-                              <option key={talla} value={talla}>{talla}</option>
-                            ))}
-                          </select>
-
-                          <input
-                            value={row.nombre}
-                            onChange={e => actualizarFilaPersonalizada(index, 'nombre', e.target.value)}
-                            placeholder="Nombre"
-                          />
-
-                          <input
-                            value={row.numero}
-                            onChange={e => actualizarFilaPersonalizada(index, 'numero', e.target.value)}
-                            placeholder="Número"
-                          />
-
-                          <button type="button" onClick={() => eliminarFilaPersonalizada(index)}>
-                            <i className="bi bi-x-lg"></i>
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="product-option-summary">
-                    <span>Total estimado</span>
-                    <strong>
-                      S/ {(Number(productoModal.precio || 0) * Number(opcionesPedido.cantidad || 1)).toFixed(2)}
-                    </strong>
-                  </div>
-
-                  <div className="product-option-actions">
+                <div className="order-stepper-progress">
+                  {[
+                    [1, 'Personalización'],
+                    [2, 'Cantidades'],
+                    [3, 'Resumen']
+                  ].map(([step, label]) => (
                     <button
-                      className="btn btn-outline-dark"
+                      key={step}
                       type="button"
-                      onClick={cerrarModalProducto}
+                      className={opcionesPedido.step === step ? 'active' : opcionesPedido.step > step ? 'done' : ''}
+                      onClick={() => setStep(step)}
                     >
-                      Seguir viendo
+                      <span>{step}</span>
+                      {label}
                     </button>
+                  ))}
+                </div>
 
+                {renderStepperContent()}
+
+                <div className="product-option-actions order-stepper-actions">
+                  <button
+                    className="btn btn-outline-dark"
+                    type="button"
+                    onClick={opcionesPedido.step === 1 ? cerrarModalProducto : prevStep}
+                  >
+                    {opcionesPedido.step === 1 ? 'Cancelar' : 'Atrás'}
+                  </button>
+
+                  {opcionesPedido.step < 3 ? (
+                    <button
+                      className="btn btn-primary"
+                      type="button"
+                      onClick={nextStep}
+                    >
+                      Siguiente
+                    </button>
+                  ) : (
                     <button
                       className="btn btn-primary"
                       type="button"
                       onClick={agregarAlCarrito}
                     >
-                      Añadir al carrito
+                      Agregar al carrito
                     </button>
-                  </div>
+                  )}
                 </div>
-              </div>
+              </>
             )}
           </div>
         </div>
