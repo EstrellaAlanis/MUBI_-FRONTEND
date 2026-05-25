@@ -15,6 +15,15 @@ import {
 } from 'recharts';
 
 const safeArray = (value) => Array.isArray(value) ? value : [];
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5071/api';
+const API_BASE_URL = API_URL.replace('/api', '');
+
+const getImageUrl = (ruta) => {
+  if (!ruta) return '';
+  const value = String(ruta);
+  if (value.startsWith('http')) return value;
+  return `${API_BASE_URL}${value}`;
+};
 
 export default function Dashboard({ role, user }) {
   const [data, setData] = useState({
@@ -161,11 +170,7 @@ export default function Dashboard({ role, user }) {
   };
 
 const pedirProducto = (p) => {
-  const imagen = p.rutaImagenPrincipal
-    ? String(p.rutaImagenPrincipal).startsWith('http')
-      ? p.rutaImagenPrincipal
-      : `http://localhost:5071${p.rutaImagenPrincipal}`
-    : '';
+  const imagen = getImageUrl(p?.rutaImagenPrincipal);
 
   const item = {
     cartId: `${p.idProducto}-base`,
@@ -209,8 +214,8 @@ const pedirProducto = (p) => {
   window.location.href = '/carrito';
 };
   const imagenProducto = (p) => {
-      return p.rutaImagenPrincipal ? `http://localhost:5071${p.rutaImagenPrincipal}` : '';
-    };
+    return getImageUrl(p?.rutaImagenPrincipal);
+  };
 
   if (role === 'cliente' && !user) {
     return (

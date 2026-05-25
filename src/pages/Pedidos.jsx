@@ -21,6 +21,24 @@ const emptyForm = {
   estadoPedido: 'pendiente'
 };
 
+const TALLAS_DISPONIBLES = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL'];
+
+const crearFilaTalla = (talla = 'M') => ({
+  id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+  talla,
+  nombre: '',
+  numero: '',
+  color: ''
+});
+
+const normalizarFilaPersonalizacion = (row, index) => ({
+  id: row.id || `${index}-${Date.now()}`,
+  talla: String(row.talla || row.Talla || row.TALLA || 'M').trim().toUpperCase(),
+  nombre: String(row.nombre || row.Nombre || row.NOMBRE || '').trim(),
+  numero: String(row.numero || row.Numero || row.Número || row.NUMERO || row.NÚMERO || '').trim(),
+  color: String(row.color || row.Color || row.COLOR || '').trim()
+});
+
 export default function Pedidos({ role, user }) {
   const location = useLocation();
   const isCliente = role === 'cliente';
@@ -40,6 +58,8 @@ export default function Pedidos({ role, user }) {
   const [archivoExcel, setArchivoExcel] = useState(null);
   const [excelPreview, setExcelPreview] = useState([]);
 const [excelConfirmado, setExcelConfirmado] = useState(false);
+  const [modoTallas, setModoTallas] = useState('manual');
+  const [filasTallas, setFilasTallas] = useState([crearFilaTalla('M')]);
 
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
@@ -74,7 +94,7 @@ const [excelConfirmado, setExcelConfirmado] = useState(false);
     const personalizados = Array.isArray(item.personalizados)
       ? item.personalizados
           .filter(row => row.talla || row.nombre || row.numero)
-          .map(row => `${row.talla || '-'} / ${row.nombre || 'Sin nombre'} / #${row.numero || '-'}`)
+          .map(row => `${row.talla || '-'} / ${row.nombre || 'Sin nombre'} / #${row.numero || '-'}${row.color ? ` / ${row.color}` : ''}`)
           .join(' | ')
       : 'Sin nombres o números personalizados';
 
@@ -95,6 +115,65 @@ const crearResumenDatosCheckout = (datos) => {
     datos.tipoComprobante === 'factura' && datos.ruc ? `RUC: ${datos.ruc}` : '',
     datos.tipoComprobante === 'factura' && datos.razonSocial ? `Razón social: ${datos.razonSocial}` : ''
   ].filter(Boolean).join('\n');
+};
+
+const getFilasTallasValidas = () => {
+  return filasTallas
+    .map((row, index) => normalizarFilaPersonalizacion(row, index))
+    .filter(row => row.talla || row.nombre || row.numero || row.color);
+};
+
+const getFilasAgrupadasPorTalla = () => {
+  const rows = getFilasTallasValidas();
+
+  return TALLAS_DISPONIBLES.map(talla => ({
+    talla,
+    filas: rows.filter(row => row.talla === talla)
+  })).filter(group => group.filas.length > 0);
+};
+
+const totalManualTallas = getFilasTallasValidas().length;
+
+const agregarFilaTalla = (talla = 'M') => {
+  setFilasTallas(prev => [...prev, crearFilaTalla(talla)]);
+};
+
+const actualizarFilaTalla = (id, field, value) => {
+  setFilasTallas(prev =>
+    prev.map(row =>
+      row.id === id
+        ? { ...row, [field]: field === 'numero' ? value.replace(/\D/g, '').slice(0, 3) : value }
+        : row
+    )
+  );
+};
+
+const eliminarFilaTalla = (id) => {
+  setFilasTallas(prev => {
+    const next = prev.filter(row => row.id !== id);
+    return next.length ? next : [crearFilaTalla('M')];
+  });
+};
+
+const cargarFilasDesdeExcel = (rows) => {
+  const normalizadas = rows
+    .map((row, index) => normalizarFilaPersonalizacion(row, index))
+    .filter(row => row.talla || row.nombre || row.numero || row.color);
+
+  if (normalizadas.length) {
+    setFilasTallas(normalizadas);
+    setModoTallas('excel');
+    setForm(prev => ({ ...prev, cantidad: normalizadas.length }));
+  }
+};
+
+const limpiarFilasManual = () => {
+  setFilasTallas([crearFilaTalla('M')]);
+  setModoTallas('manual');
+  setExcelPreview([]);
+  setExcelConfirmado(false);
+  setArchivoExcel(null);
+  setForm(prev => ({ ...prev, archivoExcelTallas: '', cantidad: 1 }));
 };
 
 const actualizarDatosClienteCheckout = async () => {
@@ -245,18 +324,43 @@ const actualizarDatosClienteCheckout = async () => {
     }
   };
 const descargarPlantillaExcel = () => {
-  const data = [
-    { Talla: 'M', Nombre: 'AXEL', Numero: '10' },
-    { Talla: 'L', Nombre: 'MIGUEL', Numero: '7' },
-    { Talla: 'S', Nombre: 'ANGEL', Numero: '11' }
+  const instrucciones = [
+    ['PLANTILLA MUBI - TALLAS, NOMBRES Y NÚMEROS'],
+    ['Uso simple: una fila representa un polo. No borres los encabezados.'],
+    ['Tallas permitidas: XS, S, M, L, XL, XXL, XXXL'],
+    ['Si un polo no lleva nombre o número, deja esa celda vacía.'],
+    ['Ejemplo: para 12 polos, registra 12 filas.']
   ];
 
-  const worksheet = XLSX.utils.json_to_sheet(data);
+  const data = [
+    { Talla: 'S', Nombre: 'LUIS', Numero: '9', Color: 'Negro', Observacion: 'Delantero' },
+    { Talla: 'S', Nombre: 'CARLOS', Numero: '10', Color: 'Negro', Observacion: 'Delantero' },
+    { Talla: 'M', Nombre: 'AXEL', Numero: '7', Color: 'Blanco', Observacion: 'Capitán' },
+    { Talla: 'L', Nombre: 'MIGUEL', Numero: '11', Color: 'Negro', Observacion: '' },
+    { Talla: 'XL', Nombre: '', Numero: '', Color: 'Negro', Observacion: 'Sin nombre' }
+  ];
+
   const workbook = XLSX.utils.book_new();
 
-  XLSX.utils.book_append_sheet(workbook, worksheet, 'Tallas');
+  const sheetInstrucciones = XLSX.utils.aoa_to_sheet(instrucciones);
+  sheetInstrucciones['!cols'] = [{ wch: 70 }];
 
-  XLSX.writeFile(workbook, 'plantilla_tallas_mubi.xlsx');
+  const worksheet = XLSX.utils.json_to_sheet(data, {
+    header: ['Talla', 'Nombre', 'Numero', 'Color', 'Observacion']
+  });
+
+  worksheet['!cols'] = [
+    { wch: 12 },
+    { wch: 24 },
+    { wch: 12 },
+    { wch: 18 },
+    { wch: 32 }
+  ];
+
+  XLSX.utils.book_append_sheet(workbook, sheetInstrucciones, 'Instrucciones');
+  XLSX.utils.book_append_sheet(workbook, worksheet, 'Plantilla');
+
+  XLSX.writeFile(workbook, 'plantilla_mubi_tallas_nombres_numeros.xlsx');
 };
   const handleExcel = (e) => {
   const file = e.target.files[0];
@@ -292,10 +396,12 @@ const descargarPlantillaExcel = () => {
         id: index + 1,
         talla: row.Talla || row.talla || row.TALLA || '',
         nombre: row.Nombre || row.nombre || row.NOMBRE || '',
-        numero: row.Numero || row.Número || row.numero || row.NUMERO || row.NÚMERO || ''
+        numero: row.Numero || row.Número || row.numero || row.NUMERO || row.NÚMERO || '',
+        color: row.Color || row.color || row.COLOR || ''
       }));
 
       setExcelPreview(normalizedRows);
+      cargarFilasDesdeExcel(normalizedRows);
     } catch {
       setError('No se pudo leer el Excel. Verifica que tenga columnas Talla, Nombre y Numero.');
       setExcelPreview([]);
@@ -309,6 +415,7 @@ const limpiarExcel = () => {
   setArchivoExcel(null);
   setExcelPreview([]);
   setExcelConfirmado(false);
+  setModoTallas('manual');
   setForm({ ...form, archivoExcelTallas: '' });
 };
 
@@ -343,7 +450,14 @@ const limpiarExcel = () => {
         await actualizarDatosClienteCheckout();
       }
 
-      const observacionesPedido = [form.descripcionDiseno, checkoutDatosTexto]
+      const filasTallasValidas = getFilasTallasValidas();
+      const resumenManualTallas = filasTallasValidas.length
+        ? `Tallas, nombres y números:\n${filasTallasValidas
+            .map((row, index) => `${index + 1}. ${row.talla || '-'} / ${row.nombre || 'Sin nombre'} / #${row.numero || '-'}${row.color ? ` / Color: ${row.color}` : ''}`)
+            .join('\n')}`
+        : '';
+
+      const observacionesPedido = [form.descripcionDiseno, resumenManualTallas, checkoutDatosTexto]
         .filter(Boolean)
         .join('\n\n');
 
@@ -367,13 +481,13 @@ const limpiarExcel = () => {
               idProducto: Number(item.idProducto),
               talla: item.talla || 'M',
               color: item.color || 'Negro',
-              cantidad: Number(item.cantidad || 1),
+              cantidad: Number(item.cantidad || item.bulkTotal || 1),
               precioUnitario: Number(item.precio || 0),
               descripcionDiseno: `Tipo: ${form.tipoDiseno}. Ubicación: ${form.ubicacionDiseno}. Detalle: ${observacionesPedido}. Archivos: ${archivos || 'Sin archivos adjuntos'}`,
               disenoPersonalizado: item.personalizados?.length
                 ? item.personalizados
                     .filter(row => row.talla || row.nombre || row.numero)
-                    .map(row => `${row.talla || '-'} / ${row.nombre || 'Sin nombre'} / #${row.numero || '-'}`)
+                    .map(row => `${row.talla || '-'} / ${row.nombre || 'Sin nombre'} / #${row.numero || '-'}${row.color ? ` / ${row.color}` : ''}`)
                     .join(' | ')
                 : (archivos || 'Diseño descrito por cliente'),
               rutaDisenoFrontal: rutaFrente,
@@ -384,10 +498,12 @@ const limpiarExcel = () => {
                 idProducto: Number(form.idProducto),
                 talla: form.talla,
                 color: form.color,
-                cantidad: Number(form.cantidad),
+                cantidad: Number(filasTallasValidas.length || form.cantidad),
                 precioUnitario: Number(selectedProduct?.precio || 0),
                 descripcionDiseno: `Tipo: ${form.tipoDiseno}. Ubicación: ${form.ubicacionDiseno}. Detalle: ${observacionesPedido}. Archivos: ${archivos || 'Sin archivos adjuntos'}`,
-                disenoPersonalizado: archivos || (form.descripcionDiseno ? 'Diseño descrito por cliente' : 'Sin diseño'),
+                disenoPersonalizado: filasTallasValidas.length
+                  ? filasTallasValidas.map(row => `${row.talla || '-'} / ${row.nombre || 'Sin nombre'} / #${row.numero || '-'}${row.color ? ` / ${row.color}` : ''}`).join(' | ')
+                  : (archivos || (form.descripcionDiseno ? 'Diseño descrito por cliente' : 'Sin diseño')),
                 rutaDisenoFrontal: rutaFrente,
                 rutaDisenoPosterior: rutaEspalda
               }
@@ -704,43 +820,259 @@ const imprimirComprobante = (comprobante) => {
         ))}
       </select>
 
-      <div className="row g-2">
-        <div className="col">
-          <label>Talla base</label>
-          <select
-            className="form-select"
-            value={form.talla}
-            onChange={e => setForm({ ...form, talla: e.target.value })}
+      <section className="mubi-smart-size-card">
+        <div className="smart-size-head">
+          <div>
+            <span className="badge-soft">Tallas, nombres y números</span>
+            <h4>¿Qué irá en cada polo?</h4>
+            <p>
+              Agrega una fila por polo. Así el cliente no se pierde y el administrador recibe
+              tallas agrupadas y listas para producción.
+            </p>
+          </div>
+
+          <div className="smart-size-total">
+            <span>Total prendas</span>
+            <strong>{totalManualTallas || Number(form.cantidad || 1)}</strong>
+          </div>
+        </div>
+
+        <div className="smart-mode-tabs">
+          <button
+            type="button"
+            className={modoTallas === 'manual' ? 'active' : ''}
+            onClick={() => setModoTallas('manual')}
           >
-            <option>XS</option>
-            <option>S</option>
-            <option>M</option>
-            <option>L</option>
-            <option>XL</option>
-            <option>XXL</option>
-            <option>XXXL</option>
-          </select>
+            <i className="bi bi-hand-index-thumb"></i>
+            Completar aquí
+          </button>
+
+          <button
+            type="button"
+            className={modoTallas === 'excel' ? 'active' : ''}
+            onClick={() => setModoTallas('excel')}
+          >
+            <i className="bi bi-file-earmark-excel"></i>
+            Usar Excel
+          </button>
         </div>
 
-        <div className="col">
-          <label>Color</label>
-          <input
-            className="form-control"
-            value={form.color}
-            onChange={e => setForm({ ...form, color: e.target.value })}
-            placeholder="Ejemplo: negro, blanco, azul..."
-          />
-        </div>
-      </div>
+        {modoTallas === 'manual' && (
+          <>
+            <div className="size-chip-row">
+              {TALLAS_DISPONIBLES.map(talla => (
+                <button
+                  key={talla}
+                  type="button"
+                  onClick={() => agregarFilaTalla(talla)}
+                >
+                  + {talla}
+                </button>
+              ))}
+            </div>
 
-      <label>Cantidad</label>
-      <input
-        className="form-control"
-        type="number"
-        min="1"
-        value={form.cantidad}
-        onChange={e => setForm({ ...form, cantidad: e.target.value })}
-      />
+            <div className="mobile-size-list">
+              {filasTallas.map((row, index) => (
+                <article className="mobile-size-card" key={row.id}>
+                  <div className="mobile-size-title">
+                    <strong>Polo #{index + 1}</strong>
+                    <button type="button" onClick={() => eliminarFilaTalla(row.id)}>
+                      Quitar
+                    </button>
+                  </div>
+
+                  <div className="mobile-size-grid">
+                    <div>
+                      <label>Talla</label>
+                      <select
+                        className="form-select"
+                        value={row.talla}
+                        onChange={e => actualizarFilaTalla(row.id, 'talla', e.target.value)}
+                      >
+                        {TALLAS_DISPONIBLES.map(talla => (
+                          <option key={talla}>{talla}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label>Número</label>
+                      <input
+                        className="form-control"
+                        value={row.numero}
+                        onChange={e => actualizarFilaTalla(row.id, 'numero', e.target.value)}
+                        placeholder="10"
+                        inputMode="numeric"
+                      />
+                    </div>
+
+                    <div>
+                      <label>Nombre</label>
+                      <input
+                        className="form-control"
+                        value={row.nombre}
+                        onChange={e => actualizarFilaTalla(row.id, 'nombre', e.target.value.toUpperCase())}
+                        placeholder="Nombre"
+                      />
+                    </div>
+
+                    <div>
+                      <label>Color</label>
+                      <input
+                        className="form-control"
+                        value={row.color}
+                        onChange={e => actualizarFilaTalla(row.id, 'color', e.target.value)}
+                        placeholder={form.color || 'Negro'}
+                      />
+                    </div>
+                  </div>
+                </article>
+              ))}
+            </div>
+
+            {getFilasAgrupadasPorTalla().length > 0 && (
+              <div className="size-group-summary">
+                <strong>Resumen agrupado por talla</strong>
+
+                <div>
+                  {getFilasAgrupadasPorTalla().map(group => (
+                    <span key={group.talla}>
+                      {group.talla}: {group.filas.length}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <button
+              className="btn btn-outline-dark w-100 mt-2"
+              type="button"
+              onClick={limpiarFilasManual}
+            >
+              Reiniciar tallas
+            </button>
+          </>
+        )}
+
+        {modoTallas === 'excel' && (
+          <div className="excel-upload-box excel-upload-box-pro">
+            <div className="excel-upload-header">
+              <div>
+                <label>Plantilla Excel para pedidos grupales</label>
+                <small>
+                  Descárgala, completa una fila por polo y súbela aquí. Ideal para equipos,
+                  promociones y colegios.
+                </small>
+              </div>
+
+              <button
+                className="btn btn-outline-dark btn-sm"
+                type="button"
+                onClick={descargarPlantillaExcel}
+              >
+                <i className="bi bi-download"></i> Descargar plantilla
+              </button>
+            </div>
+
+            <input
+              className="form-control"
+              type="file"
+              accept=".xlsx,.xls"
+              onChange={handleExcel}
+            />
+
+            {form.archivoExcelTallas && (
+              <div className="mt-2 d-flex gap-2 flex-wrap align-items-center">
+                <span className="badge-soft">
+                  <i className="bi bi-file-earmark-excel"></i> {form.archivoExcelTallas}
+                </span>
+
+                <button
+                  className="btn btn-sm btn-outline-danger"
+                  type="button"
+                  onClick={limpiarExcel}
+                >
+                  Limpiar
+                </button>
+              </div>
+            )}
+
+            {excelPreview.length > 0 && (
+              <div className="excel-preview-box">
+                <div className="excel-preview-header">
+                  <div>
+                    <strong>Vista previa agrupada</strong>
+                    <span>{excelPreview.length} polo(s) detectado(s)</span>
+                  </div>
+
+                  <button
+                    className={`btn btn-sm ${excelConfirmado ? 'btn-primary' : 'btn-outline-dark'}`}
+                    type="button"
+                    onClick={() => setExcelConfirmado(true)}
+                  >
+                    {excelConfirmado ? 'Datos confirmados' : 'Confirmar datos'}
+                  </button>
+                </div>
+
+                <div className="table-responsive">
+                  <table className="table align-middle excel-preview-table">
+                    <thead>
+                      <tr>
+                        <th>#</th>
+                        <th>Talla</th>
+                        <th>Nombre</th>
+                        <th>Número</th>
+                        <th>Color</th>
+                      </tr>
+                    </thead>
+
+                    <tbody>
+                      {excelPreview.map(row => (
+                        <tr key={row.id}>
+                          <td>{row.id}</td>
+                          <td>{row.talla || '-'}</td>
+                          <td>{row.nombre || '-'}</td>
+                          <td>{row.numero || '-'}</td>
+                          <td>{row.color || '-'}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {!excelConfirmado && (
+                  <small className="excel-warning">
+                    Revisa los datos y presiona “Confirmar datos” antes de enviar el pedido.
+                  </small>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
+        <div className="simple-form-grid mt-3">
+          <div>
+            <label>Color general</label>
+            <input
+              className="form-control"
+              value={form.color}
+              onChange={e => setForm({ ...form, color: e.target.value })}
+              placeholder="Ejemplo: negro, blanco, azul..."
+            />
+          </div>
+
+          <div>
+            <label>Cantidad manual rápida</label>
+            <input
+              className="form-control"
+              type="number"
+              min="1"
+              value={form.cantidad}
+              onChange={e => setForm({ ...form, cantidad: e.target.value })}
+            />
+          </div>
+        </div>
+      </section>
 
       <div className="simple-form-grid">
         <div>
@@ -811,97 +1143,6 @@ const imprimirComprobante = (comprobante) => {
         </div>
       </div>
 
-      <div className="excel-upload-box">
-        <div className="excel-upload-header">
-          <div>
-            <label>Excel de tallas, nombres y números</label>
-            <small>
-              Opcional. Descarga la plantilla, complétala y revisa la vista previa antes de enviar.
-            </small>
-          </div>
-
-          <button
-            className="btn btn-outline-dark btn-sm"
-            type="button"
-            onClick={descargarPlantillaExcel}
-          >
-            <i className="bi bi-download"></i> Descargar plantilla
-          </button>
-        </div>
-
-        <input
-          className="form-control"
-          type="file"
-          accept=".xlsx,.xls"
-          onChange={handleExcel}
-        />
-
-        {form.archivoExcelTallas && (
-          <div className="mt-2 d-flex gap-2 flex-wrap align-items-center">
-            <span className="badge-soft">
-              <i className="bi bi-file-earmark-excel"></i> {form.archivoExcelTallas}
-            </span>
-
-            <button
-              className="btn btn-sm btn-outline-danger"
-              type="button"
-              onClick={limpiarExcel}
-            >
-              Limpiar
-            </button>
-          </div>
-        )}
-
-        {excelPreview.length > 0 && (
-          <div className="excel-preview-box">
-            <div className="excel-preview-header">
-              <div>
-                <strong>Vista previa del Excel</strong>
-                <span>{excelPreview.length} fila(s) detectada(s)</span>
-              </div>
-
-              <button
-                className={`btn btn-sm ${excelConfirmado ? 'btn-primary' : 'btn-outline-dark'}`}
-                type="button"
-                onClick={() => setExcelConfirmado(true)}
-              >
-                {excelConfirmado ? 'Vista previa confirmada' : 'Confirmar datos'}
-              </button>
-            </div>
-
-            <div className="table-responsive">
-              <table className="table align-middle excel-preview-table">
-                <thead>
-                  <tr>
-                    <th>#</th>
-                    <th>Talla</th>
-                    <th>Nombre</th>
-                    <th>Número</th>
-                  </tr>
-                </thead>
-
-                <tbody>
-                  {excelPreview.map(row => (
-                    <tr key={row.id}>
-                      <td>{row.id}</td>
-                      <td>{row.talla || '-'}</td>
-                      <td>{row.nombre || '-'}</td>
-                      <td>{row.numero || '-'}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            {!excelConfirmado && (
-              <small className="excel-warning">
-                Revisa los datos y presiona “Confirmar datos” antes de enviar el pedido.
-              </small>
-            )}
-          </div>
-        )}
-      </div>
-
       <label>Cuéntanos cómo quieres tu polo</label>
       <textarea
         className="form-control"
@@ -916,7 +1157,7 @@ const imprimirComprobante = (comprobante) => {
       </div>
 
       <button className="btn btn-primary w-100 mt-3" type="submit">
-        {modoCliente ? 'Enviar pedido para revisión' : 'Guardar pedido'}
+        {modoCliente ? 'Enviar pedido fácil para revisión' : 'Guardar pedido'}
       </button>
     </form>
   );

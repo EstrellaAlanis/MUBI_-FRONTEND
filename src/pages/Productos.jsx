@@ -2,7 +2,8 @@ import { useEffect, useMemo, useState } from 'react';
 import PageHeader from '../components/PageHeader.jsx';
 import { api, endpoints } from '../services/api.js';
 
-const API_BASE_URL = 'http://localhost:5071';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5071/api';
+const API_BASE_URL = API_URL.replace('/api', '');
 const ORDER_SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
 
 const emptyForm = {
@@ -187,7 +188,13 @@ export default function Productos({ role, user }) {
   };
 
   const imagenProducto = (p) => {
-    return p?.rutaImagenPrincipal ? `${API_BASE_URL}${p.rutaImagenPrincipal}` : '';
+    if (!p?.rutaImagenPrincipal) return '';
+
+    const ruta = String(p.rutaImagenPrincipal);
+
+    if (ruta.startsWith('http')) return ruta;
+
+    return `${API_BASE_URL}${ruta}`;
   };
 
   const abrirOpcionesProducto = (p) => {
