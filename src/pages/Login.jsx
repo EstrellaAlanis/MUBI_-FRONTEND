@@ -66,6 +66,23 @@ export default function Login({ onLogin }) {
     setMessage('');
   };
 
+
+  const validarContrasenaSegura = (value) => {
+    if (!value) return 'La contraseña es obligatoria.';
+    if (value.length < 8 || value.length > 20) return 'La contraseña debe tener entre 8 y 20 caracteres.';
+    if (!/[A-Z]/.test(value)) return 'La contraseña debe incluir al menos una mayúscula.';
+    if (!/[a-z]/.test(value)) return 'La contraseña debe incluir al menos una minúscula.';
+    if (!/[0-9]/.test(value)) return 'La contraseña debe incluir al menos un número.';
+    if (!/[^a-zA-Z0-9]/.test(value)) return 'La contraseña debe incluir al menos un carácter especial.';
+    return '';
+  };
+
+  const abrirRecuperacion = () => {
+    const correoBase = correo || registro.correo || '';
+    cambiarModo('recuperacion');
+    setRecuperacionCorreo(correoBase);
+  };
+
   const cambiarModo = (nuevoModo) => {
     setModo(nuevoModo);
     resetMessages();
@@ -296,8 +313,10 @@ export default function Login({ onLogin }) {
       return;
     }
 
-    if (registro.contrasena.length < 6) {
-      setError('La contraseña debe tener al menos 6 caracteres.');
+    const errorContrasena = validarContrasenaSegura(registro.contrasena);
+
+    if (errorContrasena) {
+      setError(errorContrasena);
       return;
     }
 
@@ -372,8 +391,10 @@ export default function Login({ onLogin }) {
       return;
     }
 
-    if (nuevaContrasena.length < 6) {
-      setError('La nueva contraseña debe tener al menos 6 caracteres.');
+    const errorContrasena = validarContrasenaSegura(nuevaContrasena);
+
+    if (errorContrasena) {
+      setError(errorContrasena);
       return;
     }
 
@@ -381,22 +402,15 @@ export default function Login({ onLogin }) {
     setLoading(true);
 
     try {
-      await api.post(`${endpoints.usuarios}/recuperar/restablecer`, {
+      const user = await api.post(`${endpoints.usuarios}/recuperar/restablecer`, {
         correo: recuperacionCorreo,
         codigo: recuperacionCodigo,
         nuevaContrasena
       });
 
-      setMessage('Contraseña actualizada correctamente. Ahora inicia sesión.');
-      setModo('login');
-      setCorreo(recuperacionCorreo);
-      setContrasena('');
-      setCodigoLogin('');
-      setCodigoLoginEnviado(false);
-      setRecuperacionCorreo('');
-      setRecuperacionCodigo('');
-      setNuevaContrasena('');
-      setCodigoRecuperacionEnviado(false);
+      const session = buildSession(user, null);
+      onLogin(session);
+      navigateAfterLogin();
     } catch (err) {
       setError(err.message || 'No se pudo restablecer la contraseña.');
     } finally {
@@ -465,11 +479,13 @@ export default function Login({ onLogin }) {
           <input
             className="form-control"
             type="password"
+            maxLength="20"
             value={contrasena}
             onChange={e => setContrasena(e.target.value)}
             placeholder="Ingresa tu contraseña"
             required
           />
+          <small className="login-oauth-note">Máximo 20 caracteres.</small>
 
           <button className="btn btn-primary w-100 mt-3" type="submit" disabled={loading}>
             <i className="bi bi-send-check"></i>
@@ -479,7 +495,7 @@ export default function Login({ onLogin }) {
           <button
             className="forgot-password-link"
             type="button"
-            onClick={() => cambiarModo('recuperacion')}
+            onClick={abrirRecuperacion}
             disabled={loading}
           >
             ¿Olvidaste tu contraseña?
@@ -626,11 +642,13 @@ export default function Login({ onLogin }) {
         <input
           className="form-control"
           type="password"
+          maxLength="20"
           value={registro.contrasena}
           onChange={e => setRegistro({ ...registro, contrasena: e.target.value })}
           placeholder="Crea una contraseña segura"
           required
         />
+        <small className="login-oauth-note">Debe tener 8 a 20 caracteres, mayúscula, minúscula, número y carácter especial.</small>
 
         <small className="login-oauth-note">
           Tu teléfono, dirección y datos para boleta/factura se pedirán cuando confirmes un pedido.
@@ -650,7 +668,7 @@ export default function Login({ onLogin }) {
         <i className="bi bi-key-fill"></i>
         <div>
           <strong>Recuperación de contraseña</strong>
-          <span>Te enviaremos un código para crear una nueva contraseña.</span>
+          <span>Te enviaremos un código; después cambiarás tu contraseña y entrarás directo.</span>
         </div>
       </div>
 
@@ -685,11 +703,13 @@ export default function Login({ onLogin }) {
           <input
             className="form-control"
             type="password"
+            maxLength="20"
             value={nuevaContrasena}
             onChange={e => setNuevaContrasena(e.target.value)}
             placeholder="Nueva contraseña"
             required
           />
+          <small className="login-oauth-note">Debe tener 8 a 20 caracteres, mayúscula, minúscula, número y carácter especial.</small>
         </>
       )}
 
@@ -762,7 +782,7 @@ export default function Login({ onLogin }) {
               ? 'Usa correo y contraseña, o valida tu cuenta con Google y confirma el código enviado por MUBI.'
               : modo === 'registro'
                 ? 'Verifica tu correo y completa solo tus datos básicos. Los datos de entrega se pedirán al hacer un pedido.'
-                : 'Ingresa tu correo, confirma el código recibido y crea una nueva contraseña.'}
+                : 'Ingresa tu correo, confirma el código recibido y crea una nueva contraseña. Al finalizar entrarás directo sin otro código.'}
           </p>
 
           {error && <div className="alert alert-danger">{error}</div>}

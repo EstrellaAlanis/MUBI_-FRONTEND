@@ -4,7 +4,7 @@ import * as XLSX from 'xlsx';
 import PageHeader from '../components/PageHeader.jsx';
 import { api, endpoints } from '../services/api.js';
 
-const API_BASE_URL = 'http://localhost:5071';
+const API_BASE_URL = 'http://localhost:8080';
 
 const emptyForm = {
   idCliente: '',

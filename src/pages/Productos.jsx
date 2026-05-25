@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import PageHeader from '../components/PageHeader.jsx';
 import { api, endpoints } from '../services/api.js';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5071/api';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
 const API_BASE_URL = API_URL.replace('/api', '');
 const ORDER_SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
 
