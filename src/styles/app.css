@@ -9068,3 +9068,866 @@ svg {
     padding: 10px 8px;
   }
 }
+/* =====================================================
+   UX RESPONSIVE FINAL - DON'T MAKE ME THINK
+   MUBI: PC + CELULAR
+   Pegar al FINAL de src/styles/app.css
+===================================================== */
+
+/* 1. Evitar scroll horizontal accidental */
+html,
+body {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+img,
+video {
+  max-width: 100%;
+}
+
+/* 2. Mejorar foco accesible para teclado y celular */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 3px solid rgba(89, 255, 0, .75);
+  outline-offset: 3px;
+}
+
+/* 3. Botones más claros y fáciles de tocar */
+.btn,
+.client-login-btn,
+.client-cart-btn,
+.nav-item {
+  min-height: 44px;
+}
+
+button {
+  touch-action: manipulation;
+}
+
+/* 4. Evitar textos demasiado anchos en PC */
+p,
+li,
+.form-control,
+.form-select {
+  line-height: 1.55;
+}
+
+/* =====================================================
+   TABLET / PANTALLAS MEDIANAS
+===================================================== */
+
+@media (max-width: 1100px) {
+  /* Menú cliente más simple */
+  .client-web-navbar {
+    gap: 14px;
+  }
+
+  .client-menu {
+    gap: 14px;
+  }
+
+  /* Cards y paneles con menos aire */
+  .hero-card,
+  .client-hero,
+  .admin-dashboard-hero,
+  .catalog-banner,
+  .panel-card {
+    padding: 24px;
+  }
+
+  /* Grids principales bajan a 2 columnas */
+  .product-grid,
+  .mubi-product-showcase,
+  .commercial-product-grid,
+  .stats-grid,
+  .admin-kpi-grid,
+  .admin-shortcuts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* =====================================================
+   MOBILE UX - NO ME HAGAS PENSAR
+===================================================== */
+
+@media (max-width: 760px) {
+  /* Layout general más limpio */
+  .content-area {
+    padding: 16px 12px 34px;
+  }
+
+  .website-mode .content-area {
+    padding: 0;
+  }
+
+  /* Navbar cliente: simple, clara y táctil */
+  .client-web-navbar {
+    min-height: auto;
+    padding: 10px 14px;
+    gap: 10px;
+  }
+
+  .client-brand-logo {
+    width: 42px;
+    height: 42px;
+    border-radius: 14px;
+  }
+
+  .client-brand strong {
+    font-size: 19px;
+  }
+
+  .client-brand span {
+    font-size: 11px;
+  }
+
+  .client-navbar-actions {
+    gap: 8px;
+  }
+
+  .client-login-btn,
+  .client-cart-btn,
+  .client-session {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .client-menu {
+    width: 100%;
+    overflow-x: auto;
+    justify-content: flex-start;
+    gap: 10px;
+    padding-bottom: 6px;
+    scrollbar-width: none;
+  }
+
+  .client-menu::-webkit-scrollbar {
+    display: none;
+  }
+
+  .client-menu a {
+    white-space: nowrap;
+    padding: 9px 12px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, .07);
+    border: 1px solid rgba(89, 255, 0, .12);
+  }
+
+  .client-menu a.active::after {
+    display: none;
+  }
+
+  .client-menu a.active {
+    background: rgba(89, 255, 0, .16);
+    color: var(--primary);
+  }
+
+  /* Sidebar admin como barra horizontal */
+  .admin-mode .sidebar {
+    position: sticky;
+    top: 0;
+    z-index: 120;
+    width: 100%;
+    height: auto;
+    padding: 10px 12px;
+    flex-direction: row;
+    align-items: center;
+    overflow-x: auto;
+    border-right: 0;
+    border-bottom: 1px solid rgba(89, 255, 0, .18);
+  }
+
+  .admin-mode .brand {
+    min-width: 56px;
+  }
+
+  .admin-mode .brand-logo {
+    width: 44px;
+    height: 44px;
+    border-radius: 14px;
+    font-size: 22px;
+  }
+
+  .admin-mode .nav-list {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .admin-mode .nav-list::-webkit-scrollbar {
+    display: none;
+  }
+
+  .admin-mode .nav-item {
+    min-width: 66px;
+    justify-content: center;
+    padding: 10px;
+  }
+
+  .admin-mode .nav-item span,
+  .admin-mode .sidebar-card,
+  .admin-mode .brand div:not(.brand-logo) {
+    display: none;
+  }
+
+  /* Topbar admin compacta */
+  .topbar {
+    padding: 12px 14px;
+    gap: 10px;
+  }
+
+  .topbar h2 {
+    font-size: 17px;
+    line-height: 1.2;
+  }
+
+  .topbar-actions {
+    width: 100%;
+    border-radius: 18px;
+    justify-content: space-between;
+  }
+
+  .session-chip {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* Heros compactos: el usuario debe ver contenido rápido */
+  .mubi-web-hero,
+  .mubi-client-hero,
+  .mubi-video-hero {
+    min-height: auto;
+    padding: 32px 18px;
+    grid-template-columns: 1fr;
+  }
+
+  .mubi-web-hero h1,
+  .mubi-client-hero h1,
+  .mubi-video-hero h1 {
+    font-size: 31px;
+    line-height: 1.08;
+  }
+
+  .mubi-web-hero p,
+  .mubi-client-hero p,
+  .mubi-video-hero p {
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  .mubi-hero-actions,
+  .hero-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .mubi-hero-actions .btn,
+  .hero-actions .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  /* Ocultar elementos decorativos que no ayudan en móvil */
+  .hero-preview,
+  .shirt-preview,
+  .mubi-hero-card,
+  .mubi-hero-points,
+  .sidebar-card {
+    display: none !important;
+  }
+
+  /* Page headers y banners compactos */
+  .website-mode .page-header,
+  .catalog-banner,
+  .admin-dashboard-hero,
+  .client-orders-hero,
+  .cart-hero-pro,
+  .hero-card,
+  .client-hero {
+    padding: 18px !important;
+    border-radius: 22px;
+  }
+
+  .website-mode .page-header h2,
+  .catalog-banner h1,
+  .catalog-banner h2,
+  .admin-dashboard-hero h1,
+  .client-orders-hero h2,
+  .cart-hero-pro h1 {
+    font-size: 25px !important;
+    line-height: 1.1;
+  }
+
+  .website-mode .page-header p,
+  .catalog-banner p,
+  .admin-dashboard-hero p,
+  .client-orders-hero p,
+  .cart-hero-pro p {
+    font-size: 14px;
+    line-height: 1.45;
+  }
+
+  /* Secciones con menos espacio vertical */
+  .mubi-section {
+    padding: 34px 18px;
+  }
+
+  .mubi-section-title {
+    margin-bottom: 18px;
+  }
+
+  .mubi-section-title h2 {
+    font-size: 25px;
+  }
+
+  .mubi-section-title p {
+    font-size: 14px;
+  }
+
+  /* Catálogo y productos: una columna, acción clara */
+  .product-grid,
+  .mubi-product-showcase,
+  .commercial-product-grid,
+  .material-grid,
+  .category-grid,
+  .mubi-category-grid {
+    width: calc(100% - 22px) !important;
+    grid-template-columns: 1fr !important;
+    gap: 14px;
+    margin-bottom: 34px;
+  }
+
+  .product-card,
+  .mubi-product-card,
+  .commercial-product-card,
+  .category-card,
+  .mubi-category-card {
+    border-radius: 22px;
+  }
+
+  .product-art,
+  .mubi-product-img,
+  .commercial-product-image {
+    height: 190px !important;
+  }
+
+  .product-body,
+  .mubi-product-info,
+  .commercial-product-body {
+    padding: 14px !important;
+  }
+
+  .product-body h3,
+  .mubi-product-info h3,
+  .commercial-product-body h3 {
+    font-size: 18px;
+    margin: 6px 0;
+  }
+
+  .product-body p,
+  .mubi-product-info p,
+  .commercial-product-body p {
+    display: none;
+  }
+
+  .product-footer,
+  .mubi-product-info div,
+  .commercial-product-actions {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .product-footer .btn,
+  .mubi-product-info .btn,
+  .commercial-product-actions .btn {
+    width: 100%;
+  }
+
+  .product-footer strong,
+  .mubi-product-info strong {
+    font-size: 21px;
+  }
+
+  /* Buscador del catálogo */
+  .search-access-box,
+  .catalog-control-panel,
+  .catalog-header-compact {
+    width: calc(100% - 22px) !important;
+    grid-template-columns: 1fr !important;
+    padding: 12px !important;
+    border-radius: 20px;
+    margin-bottom: 16px;
+  }
+
+  .search-main input,
+  .search-access-box select {
+    height: 48px;
+  }
+
+  .search-suggestions {
+    position: static;
+    margin-top: 10px;
+  }
+
+  /* Formularios: una sola columna */
+  .form-grid,
+  .simple-form-grid,
+  .login-form-grid,
+  .client-upload-area,
+  .pedido-detail-grid,
+  .modal-design-grid,
+  .input-action {
+    grid-template-columns: 1fr !important;
+  }
+
+  .form-control,
+  .form-select,
+  textarea,
+  .btn {
+    min-height: 48px;
+  }
+
+  label {
+    font-size: 14px;
+  }
+
+  .form-actions,
+  .section-actions,
+  .filter-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .form-actions .btn,
+  .section-actions .btn,
+  .filter-bar .btn {
+    width: 100%;
+  }
+
+  /* Login móvil: menos carga visual */
+  .login-screen {
+    padding: 12px;
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .login-brand-panel {
+    min-height: auto;
+    padding: 22px;
+    border-radius: 24px;
+  }
+
+  .login-logo-wrap {
+    margin-bottom: 18px;
+  }
+
+  .login-logo-icon {
+    width: 52px;
+    height: 52px;
+    border-radius: 18px;
+    font-size: 28px;
+  }
+
+  .login-logo-wrap h1 {
+    font-size: 34px;
+  }
+
+  .login-brand-panel h2 {
+    font-size: 28px;
+  }
+
+  .login-brand-panel p {
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  .login-benefits {
+    display: none;
+  }
+
+  .login-card {
+    padding: 20px;
+    border-radius: 24px;
+  }
+
+  .login-card h2 {
+    font-size: 26px;
+  }
+
+  /* Pedidos / carrito: contenido en cards claras */
+  .client-orders-page,
+  .client-create-order-page,
+  .cart-page-pro {
+    width: calc(100% - 22px) !important;
+    margin-top: 16px;
+  }
+
+  .client-order-layout,
+  .cart-layout-pro {
+    grid-template-columns: 1fr !important;
+  }
+
+  .client-order-help,
+  .cart-summary-pro {
+    position: static !important;
+  }
+
+  .cart-progress-strip {
+    grid-template-columns: 1fr !important;
+  }
+
+  .cart-item-pro {
+    grid-template-columns: 1fr !important;
+    padding: 14px;
+    border-radius: 22px;
+  }
+
+  .cart-item-img-pro {
+    height: 210px;
+  }
+
+  .cart-summary-metrics {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Tablas: scroll horizontal controlado */
+  .table-responsive {
+    overflow-x: auto;
+    border-radius: 18px;
+  }
+
+  .table {
+    min-width: 720px;
+  }
+
+  /* Admin dashboard: solo lo importante */
+  .stats-grid,
+  .admin-kpi-grid,
+  .admin-shortcuts,
+  .client-action-grid,
+  .client-order-summary,
+  .order-status-grid {
+    grid-template-columns: 1fr !important;
+    gap: 12px;
+  }
+
+  .stat-card,
+  .admin-kpi-card,
+  .report-card {
+    padding: 16px;
+    border-radius: 20px;
+  }
+
+  .stat-card h3,
+  .admin-kpi-card strong,
+  .report-card strong {
+    font-size: 24px;
+  }
+
+  /* Modales cómodos en celular */
+  .modal-backdrop-custom {
+    padding: 10px;
+    align-items: end;
+  }
+
+  .pedido-modal,
+  .order-stepper-modal {
+    width: 100%;
+    max-height: 92vh;
+    border-radius: 22px 22px 0 0;
+    padding: 18px;
+  }
+
+  .pedido-modal-header {
+    gap: 10px;
+  }
+
+  /* Acceso restringido */
+  .no-access-card {
+    margin: 18px auto;
+    padding: 24px;
+  }
+}
+
+/* =====================================================
+   MOBILE PEQUEÑO
+===================================================== */
+
+@media (max-width: 480px) {
+  .client-web-navbar {
+    padding: 9px 12px;
+  }
+
+  .mubi-web-hero h1,
+  .mubi-client-hero h1,
+  .mubi-video-hero h1 {
+    font-size: 28px;
+  }
+
+  .catalog-banner h1,
+  .catalog-banner h2,
+  .website-mode .page-header h2 {
+    font-size: 23px !important;
+  }
+
+  .product-art,
+  .mubi-product-img,
+  .commercial-product-image {
+    height: 170px !important;
+  }
+
+  .login-card {
+    padding: 18px;
+  }
+
+  .btn,
+  .form-control,
+  .form-select {
+    font-size: 14px;
+  }
+}
+
+/* =====================================================
+   ACCESIBILIDAD: REDUCIR ANIMACIONES SI EL USUARIO LO PIDE
+===================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: .01ms !important;
+  }
+}
+/* =====================================================
+   FIX CARDS PRODUCTOS MOBILE - MUBI
+   Pegar al FINAL de src/styles/app.css
+   Motivo: corrige cards angostas y estrellas verticales en celular
+===================================================== */
+
+@media (max-width: 760px) {
+  /* 1. El catálogo debe ocupar bien el ancho del celular */
+  .product-grid,
+  .catalog-product-grid-compact,
+  .mubi-product-showcase,
+  .commercial-product-grid {
+    width: min(100% - 20px, 520px) !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    grid-template-columns: 1fr !important;
+    gap: 18px !important;
+  }
+
+  /* 2. Evita que reglas antiguas dejen la card muy angosta */
+  .product-card,
+  .catalog-card-compact,
+  .mubi-product-card,
+  .commercial-product-card {
+    width: 100% !important;
+    max-width: none !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    border-radius: 22px !important;
+    overflow: hidden !important;
+  }
+
+  /* 3. Imagen más limpia y centrada en móvil */
+  .catalog-card-compact .product-art,
+  .product-card .product-art,
+  .mubi-product-card .mubi-product-img,
+  .commercial-product-card .mubi-product-img {
+    height: 205px !important;
+    min-height: 205px !important;
+    background:
+      radial-gradient(circle at 50% 18%, rgba(89, 255, 0, .20), transparent 34%),
+      linear-gradient(180deg, #101713, #060907) !important;
+  }
+
+  .catalog-card-compact .product-art img,
+  .product-card .product-art img,
+  .mubi-product-card .mubi-product-img img,
+  .commercial-product-card .mubi-product-img img {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+    object-position: center !important;
+  }
+
+  /* 4. Contenido más compacto, sin verse vacío */
+  .catalog-card-compact .product-body,
+  .product-card .product-body,
+  .mubi-product-card .mubi-product-info,
+  .commercial-product-card .mubi-product-info {
+    padding: 14px !important;
+  }
+
+  .catalog-card-compact .product-tags,
+  .product-card .product-tags {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 7px !important;
+    margin-bottom: 8px !important;
+  }
+
+  .catalog-card-compact .status-pill,
+  .catalog-card-compact .category-pill,
+  .product-card .status-pill,
+  .product-card .category-pill {
+    max-width: 100% !important;
+    padding: 6px 10px !important;
+    font-size: 11px !important;
+    line-height: 1.1 !important;
+  }
+
+  .catalog-card-compact .product-body h3,
+  .product-card .product-body h3,
+  .mubi-product-card .mubi-product-info h3,
+  .commercial-product-card .mubi-product-info h3 {
+    min-height: auto !important;
+    margin: 6px 0 5px !important;
+    color: #f4fff0 !important;
+    font-size: 19px !important;
+    line-height: 1.12 !important;
+    display: -webkit-box !important;
+    -webkit-line-clamp: 2 !important;
+    -webkit-box-orient: vertical !important;
+    overflow: hidden !important;
+  }
+
+  /* 5. Mostrar descripción corta, no esconder todo */
+  .catalog-card-compact .product-body p,
+  .product-card .product-body p,
+  .mubi-product-card .mubi-product-info p,
+  .commercial-product-card .mubi-product-info p {
+    display: -webkit-box !important;
+    min-height: auto !important;
+    margin: 6px 0 10px !important;
+    color: rgba(244, 255, 240, .64) !important;
+    font-size: 13px !important;
+    line-height: 1.35 !important;
+    -webkit-line-clamp: 2 !important;
+    -webkit-box-orient: vertical !important;
+    overflow: hidden !important;
+  }
+
+  /* 6. Corrige las estrellas: deben ir en fila, no en columna */
+  .commercial-rating {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    gap: 4px !important;
+    margin: 8px 0 8px !important;
+    padding: 0 !important;
+    border: 0 !important;
+  }
+
+  .commercial-rating i {
+    display: inline-flex !important;
+    color: #ffc857 !important;
+    font-size: 13px !important;
+    line-height: 1 !important;
+  }
+
+  .commercial-rating small {
+    margin-left: 6px !important;
+    color: rgba(244, 255, 240, .62) !important;
+    font-size: 12px !important;
+    font-weight: 800 !important;
+  }
+
+  /* 7. Evita que TODOS los div dentro de mubi-product-info se vuelvan columna */
+  .mubi-product-info .commercial-rating {
+    flex-direction: row !important;
+    align-items: center !important;
+  }
+
+  /* 8. Precio y acciones bien claras */
+  .catalog-card-compact .product-footer,
+  .product-card .product-footer,
+  .mubi-product-card .mubi-product-info > div:not(.commercial-rating),
+  .commercial-product-card .mubi-product-info > div:not(.commercial-rating) {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+    align-items: stretch !important;
+    margin-top: 10px !important;
+    padding-top: 12px !important;
+    border-top: 1px solid rgba(89, 255, 0, .14) !important;
+  }
+
+  .catalog-card-compact .product-footer strong,
+  .product-card .product-footer strong,
+  .mubi-product-card .mubi-product-info strong,
+  .commercial-product-card .mubi-product-info strong {
+    font-size: 22px !important;
+    color: #f4fff0 !important;
+  }
+
+  .product-card-actions,
+  .commercial-more-actions {
+    width: 100% !important;
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 8px !important;
+  }
+
+  .product-card-actions .btn,
+  .commercial-more-actions .btn,
+  .catalog-card-compact .btn,
+  .product-card .btn,
+  .mubi-product-card .btn,
+  .commercial-product-card .btn {
+    width: 100% !important;
+    min-height: 48px !important;
+    border-radius: 16px !important;
+    font-size: 14px !important;
+    font-weight: 900 !important;
+  }
+
+  /* 9. Badge superior como “Más vendido” */
+  .commercial-card-badges {
+    top: 10px !important;
+    left: 10px !important;
+  }
+
+  .commercial-card-badges span {
+    padding: 6px 10px !important;
+    font-size: 11px !important;
+  }
+}
+
+/* Celulares pequeños */
+@media (max-width: 420px) {
+  .product-grid,
+  .catalog-product-grid-compact,
+  .mubi-product-showcase,
+  .commercial-product-grid {
+    width: calc(100% - 18px) !important;
+  }
+
+  .catalog-card-compact .product-art,
+  .product-card .product-art,
+  .mubi-product-card .mubi-product-img,
+  .commercial-product-card .mubi-product-img {
+    height: 185px !important;
+    min-height: 185px !important;
+  }
+
+  .catalog-card-compact .product-body,
+  .product-card .product-body,
+  .mubi-product-card .mubi-product-info,
+  .commercial-product-card .mubi-product-info {
+    padding: 12px !important;
+  }
+}
